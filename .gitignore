@@ -1,6 +1,7 @@
 # FILES
 texts
 charleston-2018.Rds
+*.html
 
 # R
 .Rproj.user
