@@ -1,0 +1,155 @@
+---
+title: "Finite Mixture Modeling"
+author: "Shiro Kuriwaki\\thanks{Thanks to Shusei Eshima, Sooahn Shin, and Shusei Eshima for their help.}"
+date: "September 2019"
+output: 
+    pdf_document:
+        latex_engine: pdflatex
+        template: sk_memo.sty
+---
+
+\section{Setup}
+
+Index individuals by \(i \in \{1:N\}\) and the universe of races excluding the top of the ticket as \(j \in \{1:J\}\). The data we observe is categorical and at the individual-race level: \[y_{ij} \in \{0, 1, 2\}.\] 
+
+where the \(M\) possible values encode
+
+\begin{table}[!h]
+\renewcommand{\arraystretch}{0.90}
+\centering
+\begin{tabular}{ll}\toprule
+0 & straight ticket vote with reference office (e.g. President)\\
+1 & split ticket vote\\
+2 & abstain\\\bottomrule
+\end{tabular}
+\end{table}
+
+The probability is governed by a length-M simplex which we will denote as \(\theta\). The distribution is conditioned on the cluster, which is the random variable \(Z\). We pre-determine how many clusters there can be,
+
+\[z_{i} \in \{1:K\}.\] 
+
+\section{Model 1}
+
+We model the outcome as coming from a categorical distribution:
+
+\begin{align*}
+(y_{ij} \mid Z_{i} = z) &\sim \text{Categorical}(\theta_{z, j})
+\end{align*}
+
+For example, suppose that there are three types of voters. They each have a given value of \(\theta_{jz}\):
+\begin{align*}
+\begin{cases}
+\text{Always straight} &\theta_{z, j} = (0.97, 0.01, 0.02) \text{ if } z = 1\\
+\text{Always split} &\theta_{z, j} = (0.01, 0.97, 0.02) \text{ if } z = 2\\
+\text{Random} &\theta_{z, j} = (0.49, 0.49, 0.02) \text{ if } z = 3\\
+\end{cases}
+\end{align*}  
+
+For simplicity, let's assume this holds regardless of the office, i.e. \(\theta_{z, j} = \theta_{z, j^\prime} ~ \forall j \neq j^\prime\).
+
+
+The cluster is also a categorical variable, 
+\begin{align*}
+Z_{i} &\sim \text{Categorical}(\psi),\\
+\psi &\sim \text{Dirichlet}(\alpha)
+\end{align*}
+
+From substantive background knowledge, our prior is that most voters are straight ticket voters, so we can set the hyperparameter to 
+
+\begin{align*}
+\alpha = (0.80, 0.10, 0.10)
+\end{align*}
+
+\section{Model 2}
+
+A simpler model may be to model the office type as a categorical variable separately. Let this variable be \(W\). The main attribute of this variable is its level of office. Our main interest is whether some offices exhibit more split ticketting than others, so the simplest setup is to let 
+
+\[w_{j} \in \{0, 1\}.\]
+
+where the values indicate
+
+
+\begin{table}[!h]
+\centering
+\begin{tabular}{ll}\toprule
+0 & low propensity to generate split ticket\\
+1 & high propensity to generate split ticket\\\bottomrule
+\end{tabular}
+\end{table}
+
+Later on, we can add a variable for candidate level incumbency.
+
+Then, the simplex governing the parameter can be indexed as
+
+\begin{align*}
+(Y_{ij} | Z_i = z, W_j = w) \sim \text{Categorical}(\theta_{z, w})
+\end{align*}
+
+The values of \(W_j\) for offices \(j \in \{1:J\}\) can be modeled as a categorical variable, or more simply a Bernoulli
+
+\begin{align*}
+W \sim  \text{Bern}(\pi)
+\end{align*}
+
+where \(\pi \in [0, 1]\)
+
+\section{Adding covariates}
+
+Later on, we will model \(\theta_{jz}\) as a function of \(v_{j}\), covariates of candidate \(j\).
+
+\[\theta_{jz} = \frac{\exp(v_{j}^{\top}\beta_{jz})}{\sum_{j^{\prime}} \exp(v_{j^{\prime}}^{\top}\beta_{j^{\prime}z})} \]
+
+For now, we will model three attributes of the candidate: whether the candidate is an incumbent, and whether the candidate is in an open-seat. 
+
+
+For example, assume we are talking about Republican voter:
+
+\begin{table}[!h]
+\centering
+\footnotesize
+\begin{tabularx}{0.6\linewidth}{cLlCc}\toprule
+ & & \multicolumn{2}{c}{Republican Candidate} & \\\cline{3-4}
+\(j\) & Race & Name & Incumbent & Open-seat\\\midrule
+1 & HD  15  & Samuel Rivers & 1 & 0 \\
+2 & HD  94  & Con Chellis & 0 & 1 \\
+3 & HD  99  & Nancy Mace & 1 & 0 \\
+4 & HD 110  & William Cogswell & 1 & 0 \\
+5 & HD 112  & Mike Sottile & 1 & 0 \\
+6 & HD 114  & Lin Bennett & 1 & 0 \\
+7 & HD 115  & Peter McCoy & 1 & 0 \\
+8 & HD 117  & Bill Crosby  & 1 & 0 \\
+9 & HD 119  & Paul Sizemore & 0 & 0 \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+
+\section{Stan Code}
+
+The Stan code:
+
+```{r, code = readLines("finite-mixture_stan-05-03.stan"), echo = TRUE, eval = FALSE}
+```
+
+
+\section{Simulated Data}
+
+```{r, code = readLines("01_sim-data.R"), echo = TRUE, eval = FALSE}
+```
+
+
+\section{Model Run}
+
+To compile and estimate the model we can add code like this at the end of the simulation script
+
+```{r, eval = FALSE}
+m <- stan_model("finite-mixture_stan-05-03.stan")
+fit = sampling(m, 
+               data = list(M = M,
+                           K = K,
+                           N = N, 
+                           J = J, 
+                           Y = Y, 
+                           alpha = alpha))
+```
+
