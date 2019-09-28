@@ -9,7 +9,7 @@ J <- 10L
 N <- 400L
 
 # hyperparameter
-alpha <- c(2, 1.5, 1)
+alpha <- c(2.0, 1.5, 1.0)
 
 # priors
 psi <- rdirichlet(1, alpha)

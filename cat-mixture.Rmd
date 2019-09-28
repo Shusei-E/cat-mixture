@@ -57,7 +57,7 @@ Z_{i} &\sim \text{Categorical}(\psi),\\
 From substantive background knowledge, our prior is that most voters are straight ticket voters, so we can set the hyperparameter to 
 
 \begin{align*}
-\alpha = (0.80, 0.10, 0.10)
+\alpha = (2.0, 1.5, 1.0)
 \end{align*}
 
 \section{Model 2}
