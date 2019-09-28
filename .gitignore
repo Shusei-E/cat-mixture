@@ -1,0 +1,26 @@
+# FILES
+texts
+charleston-2018.Rds
+
+# R
+.Rproj.user
+.Rhistory
+.RData
+.Ruserdata
+.DS_Store
+
+
+# TEX
+*.aux
+*.lof
+*.log
+*.lot
+*.fls
+*.out
+*.toc
+*.fmt
+*.fot
+*.cb
+*.cb2
+.*.lb
+
