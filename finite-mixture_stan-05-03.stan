@@ -22,7 +22,7 @@ model {
     for (n in 1:N) {
       vector[K] lps = log(psi[j]);
       for (k in 1:K) {
-        lps[k] += multinomial_lpmf(Y[n, j] | theta[k*(j - 1) + k]);
+        lps[k] += categorical_lpmf(Y[n, j] | theta[k*(j - 1) + k]);
       }
       target += log_sum_exp(lps);
     }
