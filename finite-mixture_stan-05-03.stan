@@ -18,12 +18,15 @@ model {
       psi[j] ~ dirichlet(alpha);  // prior
   }
 
-  for (j in 1:J) {
-    for (n in 1:N) {
+  for (j in 1:J) { // for each column of data
+
+    for (n in 1:N) { // for each individual
       vector[K] lps = log(psi[j]);
-      for (k in 1:K) {
+
+      for (k in 1:K) { // accumulate the log contributions from the mixture component
         lps[k] += categorical_lpmf(Y[n, j] | theta[k*(j - 1) + k]);
       }
+
       target += log_sum_exp(lps);
     }
   }
