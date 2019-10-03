@@ -1,103 +1,89 @@
 ---
-title: "Finite Mixture Modeling"
-author: "Shiro Kuriwaki\\thanks{Thanks to Shusei Eshima, Sooahn Shin, and Shusei Eshima for their help.}"
-date: "September 2019"
+title: "Probabilistic K-means with Multinomial Outcomes"
+author: "Shiro Kuriwaki\\thanks{Thanks to Shusei Eshima, Sooahn Shin, and Soichiro Yamauchi for their help.}"
+date: "October 2019"
 output: 
     pdf_document:
         latex_engine: pdflatex
         template: sk_memo.sty
 ---
 
-\section{Setup}
+\section{Data Generating Process}
 
-Index individuals by \(i \in \{1:N\}\) and the universe of races excluding the top of the ticket as \(j \in \{1:J\}\). The data we observe is categorical and at the individual-race level: \[y_{ij} \in \{0, 1, 2\}.\] 
+(Note: This first setup basically follows the Murphy text (2017), section 11.2.2. Then it tries to implement it in stan.)
 
-where the \(M\) possible values encode
+\paragraph{Setup}
 
-\begin{table}[!h]
-\renewcommand{\arraystretch}{0.90}
-\centering
-\begin{tabular}{ll}\toprule
-0 & straight ticket vote with reference office (e.g. President)\\
-1 & split ticket vote\\
-2 & abstain\\\bottomrule
-\end{tabular}
-\end{table}
+Index individuals by \(i \in \{1:N\}\) and the universe of races excluding the top of the ticket as \(j \in \{1:D\}\).  The data we observe is a length-\(D\) vector of votes \(\by_i\). \(y_{ij}\) is a discrete response value which can be 1 of \(M\) possibilities. 
 
-The probability is governed by a length-M simplex which we will denote as \(\theta\). The distribution is conditioned on the cluster, which is the random variable \(Z\). We pre-determine how many clusters there can be,
 
-\[z_{i} \in \{1:K\}.\] 
+\paragraph{Likelihood} For now, let's use \(M = 2\) so that each vote \(y_{ij}\) be a _binary_ variable for splitting their ticket or not. \(y_{ij} = 1\) would mean voter \(i\) splitting their ticket in some office \(j\), with reference to a top of the ticket office like the President or Governor. 
 
-\section{Model 1}
+Let \(\mu_{z[i], j} \in [0, 1]\) be the parameter that governs each \(y_{ij}\). i.e., \(\Pr(y_{ij} = 1) = \mu_{z[i], j}.\) However, we won't estimate a \(\mu\) for each of the \(N\) individuals; we will be estimating only \(K\) sets of length-\(D\) vectors \(\bmu_{k}\).
 
-We model the outcome as coming from a categorical distribution:
+Individual voters come from one of \(K\) different clusters. Individual's cluster membership is denoted \(z[i]\). Therefore, we can express the joint density as follows. By referring to the set of parameters generically as \(\bth\),
+
+\begin{align}
+p(\by_{i} \mid z_{i} = k, \bth) = \prod^{D}_{j = 1} \text{Bern}(y_{ij} | \bmu_k) = \prod^{D}_{j = 1} \mu_{jk}^{y_{ij}}(1 - \mu_{jk})^{1 - y_{ij}}
+\end{align}
+
+On the log scale,
+
+\begin{align}
+\log p(\by_{i} \mid z_{i} = k, \bth) = \sum_{j=1}^{D}(y_{ij}\log\mu_{jk} + (1 - y_{ij})\log\mu_{jk})
+\end{align}
+
+\paragraph{Cluster membership} The random variable \(z_i\) comes from a discrete distribution. We put a discrete prior for this, 
+
+\begin{align}
+p(z_i) &= \text{Cat}(\bpi)
+\end{align}
+
+Where the length-\(K\) simplex \(\bpi\) is called the mixing proportion.
+
+The benefit of this modeling exercise over that from a naive sample of \(N \times D\) Bernoullis is that we have captured the correlations between variables.\footnote{That dependency can be expressed as \(\mathds{E}(\by) = \sum_{k = 1}^{K} \pi_{k} \bmu_{k}\) and 
+\(\cov({\by}) = \sum_{k} \pi_{k} (\mathbf{\Sigma}_k \bmu_k\bmu_{k}^{\top}) - \mathds{E}(\by)\mathds{E}(\by)^\top\), where \(\Sigma_k = \text{diag}(\mu_{jk}(1 - \mu_{jk}))\).}
+
+
+
+\paragraph{Cluster probabilities} From this likelihood we can extract the posterior probability a point belongs to a cluster, \(p(z_i = k \mid \by_i, \bth)\). Some call this the *responsibility* of cluster \(k\) for point \(i\). It can be computed by Bayes rule as:
+
+
+\begin{align}
+p(z_i = k \mid \by_{i}, \bth) &=  \frac{p(z_i = k \mid \bth)\cdot p(y_i \mid z_i = k, \bth)}{\sum^{K}_{k^\prime = 1} p(y_{ij} \mid z_i = k^\prime, \bth) \cdot p(z_i = k^\prime \mid \bth)}\\
+&\propto p(z_i = k \mid \bth)\cdot p(y_{ij} \mid z_i = k, \bth)\\
+&=  \pi_k\cdot\mu_{jk}^{y_{ij}}(1 - \mu_{jk})^{1 - y_{ij}}
+\end{align}
+
+On the log scale, the normalized probability is computed as follows. 
 
 \begin{align*}
-(y_{ij} \mid Z_{i} = z) &\sim \text{Categorical}(\theta_{z, j})
+&\log p(z_i = k \mid y_{ij}, \bth)\\
+=& \log p(z_i = k \mid \bth) + \log p(y_i \mid z_i = k,  \bth)   - \mathrm{log\_sum\_exp}_{k^\prime = 1}^K\left(\log p(z_i = k^\prime \mid \bth) + \log p(y_{ij} \mid z_i = k^\prime, \bth)\right)\\
 \end{align*}
 
-For example, suppose that there are three types of voters. They each have a given value of \(\theta_{jz}\):
-\begin{align*}
-\begin{cases}
-\text{Always straight} &\theta_{z, j} = (0.97, 0.01, 0.02) \text{ if } z = 1\\
-\text{Always split} &\theta_{z, j} = (0.01, 0.97, 0.02) \text{ if } z = 2\\
-\text{Random} &\theta_{z, j} = (0.49, 0.49, 0.02) \text{ if } z = 3\\
-\end{cases}
-\end{align*}  
+\pagebreak
 
-For simplicity, let's assume this holds regardless of the office, i.e. \(\theta_{z, j} = \theta_{z, j^\prime} ~ \forall j \neq j^\prime\).
+\section{Stan Code}
+
+The code below tries to adapt the Stan user manual on [Soft-K means](https://mc-stan.org/docs/2_20/stan-users-guide/soft-k-means.html) and [Summing out the responsibility mixture](https://mc-stan.org/docs/2_20/stan-users-guide/summing-out-the-responsibility-parameter.html).  My current attempt at the Stan code:
+
+```{r, code = readLines("finite-mixture_stan-05-03.stan"), echo = TRUE, eval = FALSE}
+```
 
 
-The cluster is also a categorical variable, 
-\begin{align*}
-Z_{i} &\sim \text{Categorical}(\psi),\\
-\psi &\sim \text{Dirichlet}(\alpha)
-\end{align*}
-
-From substantive background knowledge, our prior is that most voters are straight ticket voters, so we can set the hyperparameter to 
-
-\begin{align*}
-\alpha = (2.0, 1.5, 1.0)
-\end{align*}
-
-\section{Model 2}
-
-A simpler model may be to model the office type as a categorical variable separately. Let this variable be \(W\). The main attribute of this variable is its level of office. Our main interest is whether some offices exhibit more split ticketting than others, so the simplest setup is to let 
-
-\[w_{j} \in \{0, 1\}.\]
-
-where the values indicate
+\pagebreak
 
 
-\begin{table}[!h]
-\centering
-\begin{tabular}{ll}\toprule
-0 & low propensity to generate split ticket\\
-1 & high propensity to generate split ticket\\\bottomrule
-\end{tabular}
-\end{table}
+\appendix
 
-Later on, we can add a variable for candidate level incumbency.
-
-Then, the simplex governing the parameter can be indexed as
-
-\begin{align*}
-(Y_{ij} | Z_i = z, W_j = w) \sim \text{Categorical}(\theta_{z, w})
-\end{align*}
-
-The values of \(W_j\) for offices \(j \in \{1:J\}\) can be modeled as a categorical variable, or more simply a Bernoulli
-
-\begin{align*}
-W \sim  \text{Bern}(\pi)
-\end{align*}
-
-where \(\pi \in [0, 1]\)
+The \textbf{Appendix} includes Old Iterations and specifications I will incorporate later.
 
 \section{Adding covariates}
 
-Later on, we will model \(\theta_{jz}\) as a function of \(v_{j}\), covariates of candidate \(j\).
+Later on, we will model \(\theta_{jk}\) as a function of \(v_{j}\), covariates of candidate \(j\).
 
-\[\theta_{jz} = \frac{\exp(v_{j}^{\top}\beta_{jz})}{\sum_{j^{\prime}} \exp(v_{j^{\prime}}^{\top}\beta_{j^{\prime}z})} \]
+\[\theta_{jk} = \frac{\exp(v_{j}^{\top}\beta_{jk})}{\sum_{j^{\prime}} \exp(v_{j^{\prime}}^{\top}\beta_{j^{\prime}k})} \]
 
 For now, we will model three attributes of the candidate: whether the candidate is an incumbent, and whether the candidate is in an open-seat. 
 
@@ -124,32 +110,74 @@ For example, assume we are talking about Republican voter:
 \end{table}
 
 
-\section{Stan Code}
-
-The Stan code:
-
-```{r, code = readLines("finite-mixture_stan-05-03.stan"), echo = TRUE, eval = FALSE}
-```
 
 
-\section{Simulated Data}
+\section{Model 2: Kosuke}
 
-```{r, code = readLines("01_sim-data.R"), echo = TRUE, eval = FALSE}
-```
+We model the outcome as coming from a categorical distribution:
+
+\begin{align*}
+(y_{ij} \mid Z_{i} = k) &\sim \text{Categorical}(\theta_{k, j})
+\end{align*}
+
+For example, suppose that there are three types of voters. They each have a given value of \(\theta_{k, j}\):
+\begin{align*}
+\begin{cases}
+\text{Always straight} &\theta_{k, j} = (0.97, 0.01, 0.02) \text{ if } k = 1\\
+\text{Always split} &\theta_{k, j} = (0.01, 0.97, 0.02) \text{ if } k = 2\\
+\text{Random} &\theta_{k, j} = (0.49, 0.49, 0.02) \text{ if } k = 3\\
+\end{cases}
+\end{align*}  
+
+For simplicity, let's assume this holds regardless of the office, i.e. \(\theta_{k, j} = \theta_{k, j^\prime} ~ \forall j \neq j^\prime\).
 
 
-\section{Model Run}
+The cluster is also a categorical variable, 
+\begin{align*}
+Z_{i} &\sim \text{Categorical}(\psi),\\
+\psi &\sim \text{Dirichlet}(\alpha)
+\end{align*}
 
-To compile and estimate the model we can add code like this at the end of the simulation script
 
-```{r, eval = FALSE}
-m <- stan_model("finite-mixture_stan-05-03.stan")
-fit = sampling(m, 
-               data = list(M = M,
-                           K = K,
-                           N = N, 
-                           J = J, 
-                           Y = Y, 
-                           alpha = alpha))
-```
+The length-\(K\) simplex \(\psi\) is called the **mixing proportion**. This is a low-dimensional quantity of interest. 
+
+From substantive background knowledge, our prior is that most voters are straight ticket voters, so we can set the hyperparameter to 
+
+\begin{align*}
+\alpha = (2.0, 1.5, 1.0)
+\end{align*}
+
+
+
+\section{Model 2: Soichiro}
+
+A simpler model may be to model the office type as a categorical variable separately. Let this variable be \(W\). The main attribute of this variable is its level of office. Our main interest is whether some offices exhibit more split ticketting than others, so the simplest setup is to let 
+
+\[w_{j} \in \{0, 1\}.\]
+
+where the values indicate
+
+\begin{table}[!h]
+\centering
+\begin{tabular}{ll}\toprule
+0 & low propensity to generate split ticket\\
+1 & high propensity to generate split ticket\\\bottomrule
+\end{tabular}
+\end{table}
+
+Later on, we can add a variable for candidate level incumbency.
+
+Then, the simplex governing the parameter can be indexed as
+
+\begin{align*}
+(Y_{ij} | Z_i = z, W_j = w) \sim \text{Categorical}(\theta_{z, w})
+\end{align*}
+
+The values of \(W_j\) for offices \(j \in \{1:J\}\) can be modeled as a categorical variable, or more simply a Bernoulli
+
+\begin{align*}
+W \sim  \text{Bern}(\pi)
+\end{align*}
+
+where \(\pi \in [0, 1].\)
 
