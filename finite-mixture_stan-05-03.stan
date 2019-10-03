@@ -1,33 +1,39 @@
 data {
   int<lower=2> M;          // number of possible values of Y
   int<lower=1> K;          // number of clusters
-  int<lower=1> J;          // number of offices
+  int<lower=1> D;          // number of offices
   int<lower=1> N;          // number of voters
-  int  Y[N, J];          // observations
-  vector<lower=0>[M] alpha;  // hyperparameter
+  vector[D] y[N];           // observations
+  vector<lower=0>[D] alpha;  // hyperparameter
+}
+
+transformed data {
+  real<upper=0> neg_log_K;
+  neg_log_K = -log(K);
 }
 
 
 parameters {
-  simplex[M] theta[K*J];     // abstain, straight, split
-  simplex[K] psi[J];         // mixing proportions
+  simplex[K] pi;         // mixing proportions
+  vector[D] mu[K];            // Bernoulli probability
+}
+
+transformed parameters {
+  real<upper=0> soft_z[N, K]; // log unnormalized clusters
+  for (n in 1:N)
+    for (k in 1:K)
+      soft_z[n, k] = neg_log_K - 0.5*dot_self(mu[k] - y[n]);
 }
 
 model {
-  for (j in 1:J) {
-      psi[j] ~ dirichlet(alpha);  // prior
-  }
+  vector[K] log_pi = log(pi); // cache log calculutation
 
-  for (j in 1:J) { // for each column of data
+  // prior
+  for (k in 1:K)
+      mu[k] ~ beta(2, 5); // something with mode at a small value
 
-    for (n in 1:N) { // for each individual
-      vector[K] lps = log(psi[j]);
-
-      for (k in 1:K) { // accumulate the log contributions from the mixture component
-        lps[k] += categorical_lpmf(Y[n, j] | theta[k*(j - 1) + k]);
-      }
-
-      target += log_sum_exp(lps);
-    }
+  // likelihood
+    for (n in 1:N) {
+        target += log_sum_exp(soft_z[n]);
   }
 }
