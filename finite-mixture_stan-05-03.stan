@@ -3,6 +3,7 @@ data {
   int<lower=1> D;                // number of offices
   int<lower=1> N;                // number of voters
   int<lower=0, upper=1> y[N, D]; // data
+  real<lower = 0> alpha;
 }
 
 transformed data {
@@ -24,6 +25,7 @@ model {
       vector[K] lps = rep_vector(neg_log_K, K); // assume z ~ Cat(1/K, ... 1/K)
       for (k in 1:K) {
         lps[k] += bernoulli_lpmf(y[n, j] | mu[k, j]); // sum all possible values of k
+        // lps[k] += bernoulli_lpmf(y[n, j] | mu[k, j]) + log(pi[k]); // sum all possible values of k
       }
       target += log_sum_exp(lps);
     }
@@ -36,4 +38,6 @@ model {
       mu[k, j] ~ beta(1, 1);
     }
   }
+  
+  pi ~ dirichlet(alpha); 
 }
