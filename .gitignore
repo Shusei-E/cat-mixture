@@ -1,6 +1,9 @@
 # FILES
 texts
 charleston-2018.Rds
+sim-data.Rds
+sim-params.Rds
+data/mcmc
 *.html
 
 # R
