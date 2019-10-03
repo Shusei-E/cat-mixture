@@ -8,6 +8,8 @@ data {
 
 transformed data {
   # following stan 9.2 but not sure if this is relevant in bernoulli case
+	# This part corresponds to the types of voters (= # of clusters)
+	# If you use Bern(y_ij | mu_k), soft_z[n, k] line will change.
   real<upper=0> neg_log_K;
   neg_log_K = -log(K);
 }
