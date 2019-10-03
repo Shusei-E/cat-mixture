@@ -5,7 +5,7 @@ library(brms)
 # dimensions
 M <- 3L
 K <- 5L
-J <- 10L
+D <- 10L
 N <- 400L
 
 # hyperparameter
@@ -24,8 +24,8 @@ theta_z <- list(
 )
 
 # Generate data
-Y <- array(NA, dim = c(N, J))
-for (j in 1:J) {
+Y <- array(NA, dim = c(N, D))
+for (j in 1:D) {
   theta_i <- map(as.character(Z), ~ theta_z[[.x]])
   y_j <- map_dbl(theta_i, ~which(rmultinom(1, 1, .x) == 1) - 1)
   Y[, j] <- y_j
