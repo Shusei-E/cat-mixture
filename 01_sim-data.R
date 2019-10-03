@@ -1,33 +1,59 @@
 library(purrr)
 library(rstan)
 library(brms)
+library(glue)
+
+set.seed(02138)
 
 # dimensions
-M <- 3L
+M <- 2L
 K <- 5L
-D <- 10L
+D <- 8L
 N <- 400L
 
 # hyperparameter
-alpha <- c(2.0, 1.5, 1.0)
+alpha <- c(3, 1, 1, 1, 1)
 
-# priors
-psi <- rdirichlet(1, alpha)
-Z_table <- rmultinom(N, 1, psi)
-Z <-  map_dbl(1:N,  ~which(Z_table[, .x] == 1) - 1)
+
+# cluster assignment
+pi <- rdirichlet(1, alpha)
+Z_table <- rmultinom(N, 1, pi)
+Z <-  map_dbl(1:N,  ~which(Z_table[, .x] == 1))
 
 # set parameters
-theta_z <- list(
-  `0` = c(0.97, 0.01, 0.02),
-  `1` = c(0.01, 0.97, 0.02),
-  `2` = c(0.49, 0.49, 0.02)
+mu <- list(
+  `1` = rep(.01, D),
+  `2` = rep(.05, D),
+  `3` = rep(.50, D),
+  `4` = rep(.99, D),
+  `5` = rbeta(D, 1, 1)
 )
 
+# each mu vector is K by D
+stopifnot(all(map_lgl(mu, ~length(.x) == D)))
+
+
 # Generate data
-Y <- array(NA, dim = c(N, D))
-for (j in 1:D) {
-  theta_i <- map(as.character(Z), ~ theta_z[[.x]])
-  y_j <- map_dbl(theta_i, ~which(rmultinom(1, 1, .x) == 1) - 1)
-  Y[, j] <- y_j
+y <- array(NA, dim = c(N, D))
+for (i in 1:N) {
+  y[i, ] <- rbinom(D, size = 1, prob = mu[[Z[i]]])
 }
 
+# put together data
+data <- list(D = D,
+             K = K,
+             N = N,
+             y = y)
+
+# target params
+params <- list(pi = pi,
+               mu = mu,
+               Z = Z)
+
+write_rds(data, "data/sim-data.Rds")
+write_rds(params, "data/sim-params.Rds")
+
+# check vanilla k means
+k_vanilla <- kmeans(data$y, centers = K)
+kdf_vanilla <- as_tibble(k_vanilla$centers) %>%
+  mutate(n = k_vanilla$size)
