@@ -1,0 +1,480 @@
+\documentclass[12pt,letterpaper]{article}
+\usepackage[margin = 1.1in]{geometry}
+
+% Essential packages
+\usepackage{color, colortbl}
+\usepackage{graphicx}
+\usepackage{enumitem}
+
+% Parameters
+\usepackage{hanging}
+\usepackage{setspace}
+\usepackage{lscape}
+\usepackage{verbatim}
+\usepackage{placeins}
+\usepackage{floatpag}
+\usepackage{subcaption}
+\usepackage{pdfpages} % include pdf
+\usepackage{abstract}
+\usepackage{multicol}
+\usepackage{caption}
+\usepackage{lineno}
+\usepackage{etoc}
+
+
+% Figure caption?
+\usepackage[labelfont=bf]{caption}
+\setlength{\captionmargin}{10pt}
+
+\usepackage{changepage} % adjustwidth
+
+\usepackage{soul} % underline
+\usepackage{tcolorbox}
+
+% Minion for main text and math?
+% \usepackage{MinionPro}
+
+% Helvetica for sans serif
+% (scaled to match size of Minion)
+\usepackage[scaled=0.90]{helvet}
+
+% Bera Mono for monospaced
+% (scaled to match size of Minion)
+\usepackage[T1]{fontenc}
+\usepackage[scaled=0.8]{beramono}
+
+% footnote
+\usepackage{titling}
+ %% Footnote font size setup
+\usepackage[hang, bottom]{footmisc}
+\setlength{\footnotemargin}{1.2em} % separation between number and text
+\interfootnotelinepenalty=10000 %% Completely prevent breaking of footnotes
+
+
+% spacing
+\newcommand\spacingset[1]{\renewcommand{\baselinestretch}%
+{#1}\small\normalsize}
+
+
+% math
+\usepackage{amsmath,amssymb, amsthm, mathtools}
+\usepackage{bm}
+\usepackage{dsfont}
+\usepackage{bbding} % checkmark
+
+\newcommand{\var}{\textnormal{Var}}
+\newcommand{\cov}{\textnormal{Cov}}
+\newcommand{\cor}{\textnormal{Cor}}
+\newcommand{\bth}{\bm{\theta}}
+\newcommand{\bmu}{\bm{\mu}}
+\newcommand{\bpi}{\bm{\pi}}
+\newcommand{\N}{\mathcal{N}}
+\newcommand{\y}{\textsc{y}}
+\newcommand{\x}{\textsc{x}}
+\newcommand{\bx}{\mathbf{x}}
+\newcommand{\by}{\mathbf{y}}
+\newcommand{\bz}{\mathbf{z}}
+\newcommand{\sR}{\textsc{r}}
+\newcommand{\sL}{\textsc{l}}
+\newcommand\norm[1]{\left\lVert#1\right\rVert} % norm enviornment
+
+
+% Colored links
+\definecolor{mygray}{gray}{0.9}
+\definecolor{crimson}{RGB}{156,0,0}
+\definecolor{red}{HTML}{E31A1C}
+\definecolor{blue}{HTML}{1F78B4}
+\usepackage{hyperref}
+\hypersetup{colorlinks = true,
+            citecolor = crimson,
+            urlcolor = crimson,
+            linkcolor = crimson,
+            plainpages = false,
+            bookmarksnumbered,
+            pdfauthor = {}}
+\usepackage{url}
+
+
+
+% Titling
+% \setlength{\droptitle}{-5.2em}
+\pretitle{\begin{center}\large\bfseries}
+\posttitle{\end{center}}
+% \preauthor{\begin{flushleft}}
+% \postauthor{\end{flushleft}}
+% \predate{\begin{flushleft}\normalsize}
+% \postdate{\end{flushleft}}
+
+% Sectioning
+\usepackage{titlesec}
+\titleformat*{\section}{\normalsize\bfseries}
+\titleformat*{\subsection}{\normalsize\itshape}
+
+
+% tables
+\usepackage{tabularx}
+\usepackage{colortbl}
+\definecolor{lgray}{gray}{0.85}
+\newcolumntype{C}{>{\centering\arraybackslash}X}
+\newcolumntype{G}{>{\columncolor{lgray}}C}
+% Tabular X special row types
+\newcolumntype{R}{>{\raggedleft\arraybackslash}X}
+\newcolumntype{L}{>{\raggedright\arraybackslash}X}
+\newcolumntype{m}{>{\hsize=1.40\hsize}X}
+\newcolumntype{b}{>{\hsize=2.10\hsize}X}
+\newcolumntype{s}{>{\hsize=0.20\hsize}C}
+
+\usepackage{booktabs}
+\usepackage{rotating}
+\usepackage{arydshln}
+
+
+% some break bug
+\makeatletter
+\def\blx@maxline{77}
+\makeatother
+
+
+% Code
+\usepackage{listings}
+\definecolor{dkgreen}{rgb}{0,0.6,0}
+\definecolor{gray}{rgb}{0.5,0.5,0.5}
+\definecolor{mauve}{rgb}{0.58,0,0.82}
+
+\lstset{frame=tb,
+  language=R,
+  aboveskip=3mm,
+  belowskip=3mm,
+  showstringspaces=false,
+  columns=flexible,
+  basicstyle={\small\ttfamily},
+  numbers=none,
+  numberstyle=\tiny\color{gray},
+  keywordstyle=\color{black},
+  commentstyle=\color{dkgreen},
+  stringstyle=\color{mauve},
+  breaklines=true,
+  breakatwhitespace=true,
+  tabsize=3
+}
+
+
+% markdown -------
+
+% Figures
+\usepackage{graphicx,grffile}
+\makeatletter
+\def\maxwidth{\ifdim\Gin@nat@width>\linewidth\linewidth\else\Gin@nat@width\fi}
+\def\maxheight{\ifdim\Gin@nat@height>\textheight\textheight\else\Gin@nat@height\fi}
+\makeatother
+
+% Scale images if necessary, so that they will not overflow the page
+% margins by default, and it is still possible to overwrite the defaults
+% using explicit options in \includegraphics[width, height, ...]{}
+\setkeys{Gin}{width=\maxwidth,height=\maxheight,keepaspectratio}
+
+
+% Shading and Rmd macros
+\usepackage{color}
+\usepackage{fancyvrb}
+\newcommand{\VerbBar}{|}
+\newcommand{\VERB}{\Verb[commandchars=\\\{\}]}
+\DefineVerbatimEnvironment{Highlighting}{Verbatim}{commandchars=\\\{\}}
+% Add ',fontsize=\small' for more characters per line
+\usepackage{framed}
+\definecolor{shadecolor}{RGB}{248,248,248}
+\newenvironment{Shaded}{\begin{snugshade}}{\end{snugshade}}
+\newcommand{\AlertTok}[1]{\textcolor[rgb]{0.94,0.16,0.16}{#1}}
+\newcommand{\AnnotationTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\newcommand{\AttributeTok}[1]{\textcolor[rgb]{0.77,0.63,0.00}{#1}}
+\newcommand{\BaseNTok}[1]{\textcolor[rgb]{0.00,0.00,0.81}{#1}}
+\newcommand{\BuiltInTok}[1]{#1}
+\newcommand{\CharTok}[1]{\textcolor[rgb]{0.31,0.60,0.02}{#1}}
+\newcommand{\CommentTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textit{#1}}}
+\newcommand{\CommentVarTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\newcommand{\ConstantTok}[1]{\textcolor[rgb]{0.00,0.00,0.00}{#1}}
+\newcommand{\ControlFlowTok}[1]{\textcolor[rgb]{0.13,0.29,0.53}{\textbf{#1}}}
+\newcommand{\DataTypeTok}[1]{\textcolor[rgb]{0.13,0.29,0.53}{#1}}
+\newcommand{\DecValTok}[1]{\textcolor[rgb]{0.00,0.00,0.81}{#1}}
+\newcommand{\DocumentationTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\newcommand{\ErrorTok}[1]{\textcolor[rgb]{0.64,0.00,0.00}{\textbf{#1}}}
+\newcommand{\ExtensionTok}[1]{#1}
+\newcommand{\FloatTok}[1]{\textcolor[rgb]{0.00,0.00,0.81}{#1}}
+\newcommand{\FunctionTok}[1]{\textcolor[rgb]{0.00,0.00,0.00}{#1}}
+\newcommand{\ImportTok}[1]{#1}
+\newcommand{\InformationTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\newcommand{\KeywordTok}[1]{\textcolor[rgb]{0.13,0.29,0.53}{\textbf{#1}}}
+\newcommand{\NormalTok}[1]{#1}
+\newcommand{\OperatorTok}[1]{\textcolor[rgb]{0.81,0.36,0.00}{\textbf{#1}}}
+\newcommand{\OtherTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{#1}}
+\newcommand{\PreprocessorTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textit{#1}}}
+\newcommand{\RegionMarkerTok}[1]{#1}
+\newcommand{\SpecialCharTok}[1]{\textcolor[rgb]{0.00,0.00,0.00}{#1}}
+\newcommand{\SpecialStringTok}[1]{\textcolor[rgb]{0.31,0.60,0.02}{#1}}
+\newcommand{\StringTok}[1]{\textcolor[rgb]{0.31,0.60,0.02}{#1}}
+\newcommand{\VariableTok}[1]{\textcolor[rgb]{0.00,0.00,0.00}{#1}}
+\newcommand{\VerbatimStringTok}[1]{\textcolor[rgb]{0.31,0.60,0.02}{#1}}
+\newcommand{\WarningTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+
+
+% Parmaters --
+\title{ \Large\textbf{Probabilistic K-means with Multinomial Outcomes}}
+
+\author{\normalsize  Shiro
+Kuriwaki\thanks{Thanks to Shusei Eshima, Sooahn Shin, and Soichiro Yamauchi for their help.} }
+
+\date{\normalsize October 2019}
+
+\begin{document}
+
+\maketitle
+
+
+
+\section{Data Generating Process}
+
+(Note: This first setup basically follows the Murphy text (2017),
+section 11.2.2. Then it tries to implement it in stan.)
+
+\paragraph{Setup}
+
+Index individuals by \(i \in \{1:N\}\) and the universe of races
+excluding the top of the ticket as \(j \in \{1:D\}\). The data we
+observe is a length-\(D\) vector of votes \(\by_i\). \(y_{ij}\) is a
+discrete response value which can be 1 of \(M\) possibilities.
+
+\paragraph{Likelihood}
+
+For now, let's use \(M = 2\) so that each vote \(y_{ij}\) be a
+\emph{binary} variable for splitting their ticket or not. \(y_{ij} = 1\)
+would mean voter \(i\) splitting their ticket in some office \(j\), with
+reference to a top of the ticket office like the President or Governor.
+
+Let \(\mu_{z[i], j} \in [0, 1]\) be the parameter that governs each
+\(y_{ij}\). i.e., \(\Pr(y_{ij} = 1) = \mu_{z[i], j}.\) However, we won't
+estimate a \(\mu\) for each of the \(N\) individuals; we will be
+estimating only \(K\) sets of length-\(D\) vectors \(\bmu_{k}\).
+
+Individual voters come from one of \(K\) different clusters.
+Individual's cluster membership is denoted \(z[i]\). Therefore, we can
+express the joint density as follows. By referring to the set of
+parameters generically as \(\bth\),
+
+\begin{align}
+p(\by_{i} \mid z_{i} = k, \bth) = \prod^{D}_{j = 1} \text{Bern}(y_{ij} | \bmu_k) = \prod^{D}_{j = 1} \mu_{jk}^{y_{ij}}(1 - \mu_{jk})^{1 - y_{ij}}
+\end{align}
+
+On the log scale,
+
+\begin{align}
+\log p(\by_{i} \mid z_{i} = k, \bth) = \sum_{j=1}^{D}(y_{ij}\log\mu_{jk} + (1 - y_{ij})\log\mu_{jk})
+\end{align}
+
+\paragraph{Cluster membership}
+
+The random variable \(z_i\) comes from a discrete distribution. We put a
+discrete prior for this,
+
+\begin{align}
+p(z_i) &= \text{Cat}(\bpi)
+\end{align}
+
+Where the length-\(K\) simplex \(\bpi\) is called the mixing proportion.
+
+The benefit of this modeling exercise over that from a naive sample of
+\(N \times D\) Bernoullis is that we have captured the correlations
+between
+variables.\footnote{That dependency can be expressed as \(\mathds{E}(\by) = \sum_{k = 1}^{K} \pi_{k} \bmu_{k}\) and 
+\(\cov({\by}) = \sum_{k} \pi_{k} (\mathbf{\Sigma}_k \bmu_k\bmu_{k}^{\top}) - \mathds{E}(\by)\mathds{E}(\by)^\top\), where \(\Sigma_k = \text{diag}(\mu_{jk}(1 - \mu_{jk}))\).}
+
+\paragraph{Cluster probabilities}
+
+From this likelihood we can extract the posterior probability a point
+belongs to a cluster, \(p(z_i = k \mid \by_i, \bth)\). Some call this
+the \emph{responsibility} of cluster \(k\) for point \(i\). It can be
+computed by Bayes rule as:
+
+\begin{align}
+p(z_i = k \mid \by_{i}, \bth) &=  \frac{p(z_i = k \mid \bth)\cdot p(y_i \mid z_i = k, \bth)}{\sum^{K}_{k^\prime = 1} p(y_{ij} \mid z_i = k^\prime, \bth) \cdot p(z_i = k^\prime \mid \bth)}\\
+&\propto p(z_i = k \mid \bth)\cdot p(y_{ij} \mid z_i = k, \bth)\\
+&=  \pi_k\cdot\mu_{jk}^{y_{ij}}(1 - \mu_{jk})^{1 - y_{ij}}
+\end{align}
+
+On the log scale, the normalized probability is computed as follows.
+
+\begin{align*}
+&\log p(z_i = k \mid y_{ij}, \bth)\\
+=& \log p(z_i = k \mid \bth) + \log p(y_i \mid z_i = k,  \bth)   - \mathrm{log\_sum\_exp}_{k^\prime = 1}^K\left(\log p(z_i = k^\prime \mid \bth) + \log p(y_{ij} \mid z_i = k^\prime, \bth)\right)\\
+\end{align*}
+
+\pagebreak
+
+\section{Stan Code}
+
+The code below tries to adapt the Stan user manual on
+\href{https://mc-stan.org/docs/2_20/stan-users-guide/soft-k-means.html}{Soft-K
+means} and
+\href{https://mc-stan.org/docs/2_20/stan-users-guide/summing-out-the-responsibility-parameter.html}{Summing
+out the responsibility mixture}. My current attempt at the Stan code:
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{data \{}
+\NormalTok{  int}\OperatorTok{<}\NormalTok{lower=}\DecValTok{1}\OperatorTok{>}\StringTok{ }\NormalTok{K;                }\OperatorTok{/}\ErrorTok{/}\StringTok{ }\NormalTok{number of clusters}
+\NormalTok{  int}\OperatorTok{<}\NormalTok{lower=}\DecValTok{1}\OperatorTok{>}\StringTok{ }\NormalTok{D;                }\OperatorTok{/}\ErrorTok{/}\StringTok{ }\NormalTok{number of offices}
+\NormalTok{  int}\OperatorTok{<}\NormalTok{lower=}\DecValTok{1}\OperatorTok{>}\StringTok{ }\NormalTok{N;                }\OperatorTok{/}\ErrorTok{/}\StringTok{ }\NormalTok{number of voters}
+\NormalTok{  int}\OperatorTok{<}\NormalTok{lower=}\DecValTok{0}\NormalTok{, upper=}\DecValTok{1}\OperatorTok{>}\StringTok{ }\NormalTok{y[N, D]; }\OperatorTok{/}\ErrorTok{/}\StringTok{ }\NormalTok{data}
+\NormalTok{  vector}\OperatorTok{<}\NormalTok{lower=}\DecValTok{0}\OperatorTok{>}\NormalTok{[K] alpha;      }\OperatorTok{/}\ErrorTok{/}\StringTok{ }\NormalTok{hyperparameter }\ControlFlowTok{for}\NormalTok{ cluster prevalence}
+\NormalTok{\}}
+
+\NormalTok{transformed data \{}
+\NormalTok{  real}\OperatorTok{<}\NormalTok{upper=}\DecValTok{0}\OperatorTok{>}\StringTok{ }\NormalTok{neg_log_K;}
+\NormalTok{  neg_log_K =}\StringTok{ }\OperatorTok{-}\KeywordTok{log}\NormalTok{(K);}
+\NormalTok{\}}
+
+
+\NormalTok{parameters \{}
+\NormalTok{  simplex[K] pi_mixture;          }\OperatorTok{/}\ErrorTok{/}\StringTok{ }\NormalTok{mixing proportions}
+\NormalTok{  real}\OperatorTok{<}\NormalTok{lower=}\DecValTok{0}\NormalTok{,upper=}\DecValTok{1}\OperatorTok{>}\StringTok{ }\NormalTok{mu[K, D]; }\OperatorTok{/}\ErrorTok{/}\StringTok{ }\NormalTok{Bernoulli probability}
+\NormalTok{\}}
+
+\NormalTok{model \{}
+  \OperatorTok{/}\ErrorTok{/}\StringTok{ }\NormalTok{prior}
+\NormalTok{  pi_mixture }\OperatorTok{~}\StringTok{ }\KeywordTok{dirichlet}\NormalTok{(alpha);}
+  \ControlFlowTok{for}\NormalTok{ (k }\ControlFlowTok{in} \DecValTok{1}\OperatorTok{:}\NormalTok{K) \{}
+    \ControlFlowTok{for}\NormalTok{ (j }\ControlFlowTok{in} \DecValTok{1}\OperatorTok{:}\NormalTok{D) \{}
+      \OperatorTok{/}\ErrorTok{/}\StringTok{ }\NormalTok{something with mode at a low pr}
+\NormalTok{      mu[k, j] }\OperatorTok{~}\StringTok{ }\KeywordTok{beta}\NormalTok{(}\DecValTok{2}\NormalTok{, }\DecValTok{5}\NormalTok{);}
+\NormalTok{    \}}
+\NormalTok{  \}}
+
+  \OperatorTok{/}\ErrorTok{/}\StringTok{ }\NormalTok{likelihood}
+  \ControlFlowTok{for}\NormalTok{ (n }\ControlFlowTok{in} \DecValTok{1}\OperatorTok{:}\NormalTok{N) \{}
+    \ControlFlowTok{for}\NormalTok{(j }\ControlFlowTok{in} \DecValTok{1}\OperatorTok{:}\NormalTok{D) \{}
+      \OperatorTok{/}\ErrorTok{/}\StringTok{ }\NormalTok{initiate with z }\OperatorTok{~}\StringTok{ }\KeywordTok{Cat}\NormalTok{(}\DecValTok{1}\OperatorTok{/}\NormalTok{K, ... }\DecValTok{1}\OperatorTok{/}\NormalTok{K)}
+\NormalTok{      vector[K] lps =}\StringTok{ }\KeywordTok{rep_vector}\NormalTok{(neg_log_K, K);}
+      \ControlFlowTok{for}\NormalTok{ (k }\ControlFlowTok{in} \DecValTok{1}\OperatorTok{:}\NormalTok{K) \{}
+        \OperatorTok{/}\ErrorTok{/}\StringTok{ }\NormalTok{sum all possible values of}
+\NormalTok{        lps[k] }\OperatorTok{+}\ErrorTok{=}\StringTok{ }\KeywordTok{bernoulli_lpmf}\NormalTok{(y[n, j] }\OperatorTok{|}\StringTok{ }\NormalTok{mu[k, j]) }\OperatorTok{+}\StringTok{ }\KeywordTok{log}\NormalTok{(pi_mixture[k]);}
+\NormalTok{      \}}
+\NormalTok{      target }\OperatorTok{+}\ErrorTok{=}\StringTok{ }\KeywordTok{log_sum_exp}\NormalTok{(lps);}
+\NormalTok{    \}}
+\NormalTok{  \}}
+
+
+
+\NormalTok{\}}
+\end{Highlighting}
+\end{Shaded}
+
+\pagebreak
+
+\appendix
+
+The \textbf{Appendix} includes Old Iterations and specifications I will
+incorporate later.
+
+\section{Adding covariates}
+
+Later on, we will model \(\theta_{jk}\) as a function of \(v_{j}\),
+covariates of candidate \(j\).
+
+\[\theta_{jk} = \frac{\exp(v_{j}^{\top}\beta_{jk})}{\sum_{j^{\prime}} \exp(v_{j^{\prime}}^{\top}\beta_{j^{\prime}k})} \]
+
+For now, we will model three attributes of the candidate: whether the
+candidate is an incumbent, and whether the candidate is in an open-seat.
+
+For example, assume we are talking about Republican voter:
+
+\begin{table}[!h]
+\centering
+\footnotesize
+\begin{tabularx}{0.6\linewidth}{cLlCc}\toprule
+ & & \multicolumn{2}{c}{Republican Candidate} & \\\cline{3-4}
+\(j\) & Race & Name & Incumbent & Open-seat\\\midrule
+1 & HD  15  & Samuel Rivers & 1 & 0 \\
+2 & HD  94  & Con Chellis & 0 & 1 \\
+3 & HD  99  & Nancy Mace & 1 & 0 \\
+4 & HD 110  & William Cogswell & 1 & 0 \\
+5 & HD 112  & Mike Sottile & 1 & 0 \\
+6 & HD 114  & Lin Bennett & 1 & 0 \\
+7 & HD 115  & Peter McCoy & 1 & 0 \\
+8 & HD 117  & Bill Crosby  & 1 & 0 \\
+9 & HD 119  & Paul Sizemore & 0 & 0 \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\section{Model 2: Kosuke}
+
+We model the outcome as coming from a categorical distribution:
+
+\begin{align*}
+(y_{ij} \mid Z_{i} = k) &\sim \text{Categorical}(\theta_{k, j})
+\end{align*}
+
+For example, suppose that there are three types of voters. They each
+have a given value of \(\theta_{k, j}\): \begin{align*}
+\begin{cases}
+\text{Always straight} &\theta_{k, j} = (0.97, 0.01, 0.02) \text{ if } k = 1\\
+\text{Always split} &\theta_{k, j} = (0.01, 0.97, 0.02) \text{ if } k = 2\\
+\text{Random} &\theta_{k, j} = (0.49, 0.49, 0.02) \text{ if } k = 3\\
+\end{cases}
+\end{align*}
+
+For simplicity, let's assume this holds regardless of the office, i.e.
+\(\theta_{k, j} = \theta_{k, j^\prime} ~ \forall j \neq j^\prime\).
+
+The cluster is also a categorical variable, \begin{align*}
+Z_{i} &\sim \text{Categorical}(\psi),\\
+\psi &\sim \text{Dirichlet}(\alpha)
+\end{align*}
+
+The length-\(K\) simplex \(\psi\) is called the \textbf{mixing
+proportion}. This is a low-dimensional quantity of interest.
+
+From substantive background knowledge, our prior is that most voters are
+straight ticket voters, so we can set the hyperparameter to
+
+\begin{align*}
+\alpha = (2.0, 1.5, 1.0)
+\end{align*}
+
+\section{Model 2: Soichiro}
+
+A simpler model may be to model the office type as a categorical
+variable separately. Let this variable be \(W\). The main attribute of
+this variable is its level of office. Our main interest is whether some
+offices exhibit more split ticketting than others, so the simplest setup
+is to let
+
+\[w_{j} \in \{0, 1\}.\]
+
+where the values indicate
+
+\begin{table}[!h]
+\centering
+\begin{tabular}{ll}\toprule
+0 & low propensity to generate split ticket\\
+1 & high propensity to generate split ticket\\\bottomrule
+\end{tabular}
+\end{table}
+
+Later on, we can add a variable for candidate level incumbency.
+
+Then, the simplex governing the parameter can be indexed as
+
+\begin{align*}
+(Y_{ij} | Z_i = z, W_j = w) \sim \text{Categorical}(\theta_{z, w})
+\end{align*}
+
+The values of \(W_j\) for offices \(j \in \{1:J\}\) can be modeled as a
+categorical variable, or more simply a Bernoulli
+
+\begin{align*}
+W \sim  \text{Bern}(\pi)
+\end{align*}
+
+where \(\pi \in [0, 1].\)
+\end{document}
+
