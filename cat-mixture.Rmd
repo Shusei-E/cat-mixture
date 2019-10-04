@@ -5,7 +5,8 @@ date: "October 2019"
 output: 
     pdf_document:
         latex_engine: pdflatex
-        template: sk_memo.sty
+        template: sty/sk_memo.sty
+        keep_tex: true
 ---
 
 \section{Data Generating Process}
