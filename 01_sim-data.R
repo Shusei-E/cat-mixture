@@ -24,9 +24,9 @@ Z <-  map_dbl(1:N,  ~which(Z_table[, .x] == 1))
 mu <- list(
   `1` = rep(.01, D),
   `2` = rep(.05, D),
-  `3` = rep(.50, D),
+  `3` = rep(.10, D),
   `4` = rep(.99, D),
-  `5` = rbeta(D, 1, 1)
+  `5` = rbeta(D, 2, 5)
 )
 
 # each mu vector is K by D
@@ -43,7 +43,8 @@ for (i in 1:N) {
 data <- list(D = D,
              K = K,
              N = N,
-             y = y)
+             y = y,
+             alpha = alpha)
 
 # target params
 params <- list(pi = pi,
