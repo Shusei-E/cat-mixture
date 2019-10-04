@@ -295,16 +295,16 @@ the \emph{responsibility} of cluster \(k\) for point \(i\). It can be
 computed by Bayes rule as:
 
 \begin{align}
-p(z_i = k \mid \by_{i}, \bth) &=  \frac{p(z_i = k \mid \bth)\cdot p(y_i \mid z_i = k, \bth)}{\sum^{K}_{k^\prime = 1} p(y_{ij} \mid z_i = k^\prime, \bth) \cdot p(z_i = k^\prime \mid \bth)}\\
-&\propto p(z_i = k \mid \bth)\cdot p(y_{ij} \mid z_i = k, \bth)\\
-&=  \pi_k\cdot\mu_{jk}^{y_{ij}}(1 - \mu_{jk})^{1 - y_{ij}}
+p(z_i = k \mid \by_{i}, \bth) &=  \frac{p(z_i = k \mid \bth)\cdot p(\by_{i} \mid z_i = k, \bth)}{\sum^{K}_{k^\prime = 1} p(\by_{i} \mid z_i = k^\prime, \bth) \cdot p(z_i = k^\prime \mid \bth)}\\
+&\propto p(z_i = k \mid \bth)\cdot p(\by_{i} \mid z_i = k, \bth)\\
+&=  \pi_k\cdot\prod^{D}_{j=1}\mu_{jk}^{y_{ij}}(1 - \mu_{jk})^{1 - y_{ij}}
 \end{align}
 
 On the log scale, the normalized probability is computed as follows.
 
 \begin{align*}
-&\log p(z_i = k \mid y_{ij}, \bth)\\
-=& \log p(z_i = k \mid \bth) + \log p(y_i \mid z_i = k,  \bth)   - \mathrm{log\_sum\_exp}_{k^\prime = 1}^K\left(\log p(z_i = k^\prime \mid \bth) + \log p(y_{ij} \mid z_i = k^\prime, \bth)\right)\\
+&\log p(z_i = k \mid \by_{i}, \bth)\\
+=& \log p(z_i = k \mid \bth) + \log p(\by_i \mid z_i = k,  \bth)   - \mathrm{log\_sum\_exp}_{k^\prime = 1}^K\left(\log p(z_i = k^\prime \mid \bth) + \log p(\by_i \mid z_i = k^\prime, \bth)\right)\\
 \end{align*}
 
 \pagebreak
