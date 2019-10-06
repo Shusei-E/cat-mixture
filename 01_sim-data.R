@@ -6,11 +6,10 @@ library(glue)
 set.seed(021382)
 
 # dimensions
-M <- 2L
-K <- 5L
-D <- 8L
 L <- 1L
+D <- 8L
 N <- 100L
+K <- 5L
 
 # hyperparameter
 alpha <- (K:1)^2
