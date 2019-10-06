@@ -3,7 +3,7 @@ library(rstan)
 library(brms)
 library(glue)
 
-set.seed(02138)
+set.seed(021382)
 
 # dimensions
 M <- 2L
@@ -13,7 +13,7 @@ L <- 1L
 N <- 100L
 
 # hyperparameter
-alpha <- c(3, rep(1, K - 1))
+alpha <- (K:1)^2
 
 
 # cluster assignment
@@ -21,7 +21,7 @@ pi <- rdirichlet(1, alpha)
 Z_table <- rmultinom(N, 1, pi)
 Z <-  map_dbl(1:N,  ~which(Z_table[, .x] == 1))
 
-# set parameters
+# setpi parameters
 mu <- list(
   `1` = rep(.01, D),
   `2` = rep(.05, D),
