@@ -24,7 +24,10 @@ zeta_hat <- matrix(NA, nrow = data$N, ncol = data$K)
 
 iter <- 1
 
-while (iter < 10) {
+
+store_iter <- list()
+
+while (iter < 100) {
   if (iter == 1) {
     theta <- init_theta
     mu <- init_mu
@@ -64,6 +67,8 @@ while (iter < 10) {
     }
   }
   iter <- iter + 1
+  # store each iter
+  store_iter[[iter]] <- list(mu = mu, theta = theta, zeta = zeta_hat)
   cat(glue("iter: {iter}"), "\n")
 }
 
