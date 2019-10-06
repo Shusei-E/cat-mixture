@@ -12,7 +12,41 @@ store_iter <- read_rds("data/EM/sim-iterations.Rds")
 
 # check sup-norm of changes in model parameters
 
-# extract parameters from iteration t
+#' Observed log likelihood
+#'
+#' @param t iteration index
+#' @param obj the EM object with all iterations
+#' @return the log likelihood
+#'
+loglik_obs <- function(t, obj = store_iter) {
+  loglik_obs <- c()
+
+  theta_t <- obj[[t]]$theta
+  mu_t <- obj[[t]]$mu
+  user_K <- length(theta_t)
+
+  # for each N
+  for (i in 1:data$N) {
+    resp_i <- c()
+    for (k in 1:user_K) {
+      resp_i[k] = foreach(j = 1:data$D, .combine = "+") %:%
+        foreach(l = 0:(data$L), .combine = "+") %do% {
+          (data$y[i, j] == l)*log(mu_t[k, j, (l + 1)])
+        }
+    }
+    loglik_obs[i] <- prod(log(theta_t) + resp_i[1:user_K])
+  }
+  sum(loglik_obs)
+}
+
+loglik_obs(1)
+loglik_obs(10)
+
+#'extract parameters from iteration t
+#' @param t iteration index
+#' @param obj the EM object with all iterations
+#'
+#' @return A tibble
 vector_params <- function(t, obj = store_iter) {
   theta_vector <- obj[[t]]$theta
   mu_vector <- obj[[t]]$mu[, , (data$L + 1)]
@@ -37,6 +71,7 @@ params_stacked <- foreach(t = 2:length(store_iter), .combine = "bind_rows") %do%
 }
 
 
+# plot max of diff
 params_stacked %>%
   group_by(iter) %>%
   summarize(max_diff = max(diff)) %>%
