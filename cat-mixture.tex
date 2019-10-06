@@ -179,46 +179,6 @@
 
 
 % Shading and Rmd macros
-\usepackage{color}
-\usepackage{fancyvrb}
-\newcommand{\VerbBar}{|}
-\newcommand{\VERB}{\Verb[commandchars=\\\{\}]}
-\DefineVerbatimEnvironment{Highlighting}{Verbatim}{commandchars=\\\{\}}
-% Add ',fontsize=\small' for more characters per line
-\usepackage{framed}
-\definecolor{shadecolor}{RGB}{248,248,248}
-\newenvironment{Shaded}{\begin{snugshade}}{\end{snugshade}}
-\newcommand{\AlertTok}[1]{\textcolor[rgb]{0.94,0.16,0.16}{#1}}
-\newcommand{\AnnotationTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
-\newcommand{\AttributeTok}[1]{\textcolor[rgb]{0.77,0.63,0.00}{#1}}
-\newcommand{\BaseNTok}[1]{\textcolor[rgb]{0.00,0.00,0.81}{#1}}
-\newcommand{\BuiltInTok}[1]{#1}
-\newcommand{\CharTok}[1]{\textcolor[rgb]{0.31,0.60,0.02}{#1}}
-\newcommand{\CommentTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textit{#1}}}
-\newcommand{\CommentVarTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
-\newcommand{\ConstantTok}[1]{\textcolor[rgb]{0.00,0.00,0.00}{#1}}
-\newcommand{\ControlFlowTok}[1]{\textcolor[rgb]{0.13,0.29,0.53}{\textbf{#1}}}
-\newcommand{\DataTypeTok}[1]{\textcolor[rgb]{0.13,0.29,0.53}{#1}}
-\newcommand{\DecValTok}[1]{\textcolor[rgb]{0.00,0.00,0.81}{#1}}
-\newcommand{\DocumentationTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
-\newcommand{\ErrorTok}[1]{\textcolor[rgb]{0.64,0.00,0.00}{\textbf{#1}}}
-\newcommand{\ExtensionTok}[1]{#1}
-\newcommand{\FloatTok}[1]{\textcolor[rgb]{0.00,0.00,0.81}{#1}}
-\newcommand{\FunctionTok}[1]{\textcolor[rgb]{0.00,0.00,0.00}{#1}}
-\newcommand{\ImportTok}[1]{#1}
-\newcommand{\InformationTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
-\newcommand{\KeywordTok}[1]{\textcolor[rgb]{0.13,0.29,0.53}{\textbf{#1}}}
-\newcommand{\NormalTok}[1]{#1}
-\newcommand{\OperatorTok}[1]{\textcolor[rgb]{0.81,0.36,0.00}{\textbf{#1}}}
-\newcommand{\OtherTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{#1}}
-\newcommand{\PreprocessorTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textit{#1}}}
-\newcommand{\RegionMarkerTok}[1]{#1}
-\newcommand{\SpecialCharTok}[1]{\textcolor[rgb]{0.00,0.00,0.00}{#1}}
-\newcommand{\SpecialStringTok}[1]{\textcolor[rgb]{0.31,0.60,0.02}{#1}}
-\newcommand{\StringTok}[1]{\textcolor[rgb]{0.31,0.60,0.02}{#1}}
-\newcommand{\VariableTok}[1]{\textcolor[rgb]{0.00,0.00,0.00}{#1}}
-\newcommand{\VerbatimStringTok}[1]{\textcolor[rgb]{0.31,0.60,0.02}{#1}}
-\newcommand{\WarningTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
 
 
 % Parmaters --
@@ -323,64 +283,6 @@ The complete log-likelihood can be writen as
 \begin{align}
 \mathds{L}_{\mathrm{comp}}(\bmu, \bth | \bY, \bZ) & \prod^{N}_{i=} \\
 \end{align}
-
-\section{Stan Code}
-
-The code below tries to adapt the Stan user manual on
-\href{https://mc-stan.org/docs/2_20/stan-users-guide/soft-k-means.html}{Soft-K
-means} and
-\href{https://mc-stan.org/docs/2_20/stan-users-guide/summing-out-the-responsibility-parameter.html}{Summing
-out the responsibility mixture}. My current attempt at the Stan code:
-
-\begin{Shaded}
-\begin{Highlighting}[]
-\NormalTok{data \{}
-\NormalTok{  int}\OperatorTok{<}\NormalTok{lower=}\DecValTok{1}\OperatorTok{>}\StringTok{ }\NormalTok{K;                }\OperatorTok{/}\ErrorTok{/}\StringTok{ }\NormalTok{number of clusters}
-\NormalTok{  int}\OperatorTok{<}\NormalTok{lower=}\DecValTok{1}\OperatorTok{>}\StringTok{ }\NormalTok{D;                }\OperatorTok{/}\ErrorTok{/}\StringTok{ }\NormalTok{number of offices}
-\NormalTok{  int}\OperatorTok{<}\NormalTok{lower=}\DecValTok{1}\OperatorTok{>}\StringTok{ }\NormalTok{N;                }\OperatorTok{/}\ErrorTok{/}\StringTok{ }\NormalTok{number of voters}
-\NormalTok{  int}\OperatorTok{<}\NormalTok{lower=}\DecValTok{0}\NormalTok{, upper=}\DecValTok{1}\OperatorTok{>}\StringTok{ }\NormalTok{y[N, D]; }\OperatorTok{/}\ErrorTok{/}\StringTok{ }\NormalTok{data}
-\NormalTok{  vector}\OperatorTok{<}\NormalTok{lower=}\DecValTok{0}\OperatorTok{>}\NormalTok{[K] alpha;      }\OperatorTok{/}\ErrorTok{/}\StringTok{ }\NormalTok{hyperparameter }\ControlFlowTok{for}\NormalTok{ cluster prevalence}
-\NormalTok{\}}
-
-\NormalTok{transformed data \{}
-\NormalTok{  real}\OperatorTok{<}\NormalTok{upper=}\DecValTok{0}\OperatorTok{>}\StringTok{ }\NormalTok{neg_log_K;}
-\NormalTok{  neg_log_K =}\StringTok{ }\OperatorTok{-}\KeywordTok{log}\NormalTok{(K);}
-\NormalTok{\}}
-
-
-\NormalTok{parameters \{}
-\NormalTok{  simplex[K] pi_mixture;          }\OperatorTok{/}\ErrorTok{/}\StringTok{ }\NormalTok{mixing proportions}
-\NormalTok{  real}\OperatorTok{<}\NormalTok{lower=}\DecValTok{0}\NormalTok{,upper=}\DecValTok{1}\OperatorTok{>}\StringTok{ }\NormalTok{mu[K, D]; }\OperatorTok{/}\ErrorTok{/}\StringTok{ }\NormalTok{Bernoulli probability}
-\NormalTok{\}}
-
-\NormalTok{model \{}
-  \OperatorTok{/}\ErrorTok{/}\StringTok{ }\NormalTok{prior}
-\NormalTok{  pi_mixture }\OperatorTok{~}\StringTok{ }\KeywordTok{dirichlet}\NormalTok{(alpha);}
-  \ControlFlowTok{for}\NormalTok{ (k }\ControlFlowTok{in} \DecValTok{1}\OperatorTok{:}\NormalTok{K) \{}
-    \ControlFlowTok{for}\NormalTok{ (j }\ControlFlowTok{in} \DecValTok{1}\OperatorTok{:}\NormalTok{D) \{}
-      \OperatorTok{/}\ErrorTok{/}\StringTok{ }\NormalTok{something with mode at a low pr}
-\NormalTok{      mu[k, j] }\OperatorTok{~}\StringTok{ }\KeywordTok{beta}\NormalTok{(}\DecValTok{2}\NormalTok{, }\DecValTok{5}\NormalTok{);}
-\NormalTok{    \}}
-\NormalTok{  \}}
-
-  \OperatorTok{/}\ErrorTok{/}\StringTok{ }\NormalTok{likelihood}
-  \ControlFlowTok{for}\NormalTok{ (n }\ControlFlowTok{in} \DecValTok{1}\OperatorTok{:}\NormalTok{N) \{}
-    \ControlFlowTok{for}\NormalTok{(j }\ControlFlowTok{in} \DecValTok{1}\OperatorTok{:}\NormalTok{D) \{}
-      \OperatorTok{/}\ErrorTok{/}\StringTok{ }\NormalTok{initiate with z }\OperatorTok{~}\StringTok{ }\KeywordTok{Cat}\NormalTok{(}\DecValTok{1}\OperatorTok{/}\NormalTok{K, ... }\DecValTok{1}\OperatorTok{/}\NormalTok{K)}
-\NormalTok{      vector[K] lps =}\StringTok{ }\KeywordTok{rep_vector}\NormalTok{(neg_log_K, K);}
-      \ControlFlowTok{for}\NormalTok{ (k }\ControlFlowTok{in} \DecValTok{1}\OperatorTok{:}\NormalTok{K) \{}
-        \OperatorTok{/}\ErrorTok{/}\StringTok{ }\NormalTok{sum all possible values of}
-\NormalTok{        lps[k] }\OperatorTok{+}\ErrorTok{=}\StringTok{ }\KeywordTok{bernoulli_lpmf}\NormalTok{(y[n, j] }\OperatorTok{|}\StringTok{ }\NormalTok{mu[k, j]) }\OperatorTok{+}\StringTok{ }\KeywordTok{log}\NormalTok{(pi_mixture[k]);}
-\NormalTok{      \}}
-\NormalTok{      target }\OperatorTok{+}\ErrorTok{=}\StringTok{ }\KeywordTok{log_sum_exp}\NormalTok{(lps);}
-\NormalTok{    \}}
-\NormalTok{  \}}
-
-
-
-\NormalTok{\}}
-\end{Highlighting}
-\end{Shaded}
 
 \pagebreak
 
