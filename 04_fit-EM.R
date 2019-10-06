@@ -8,28 +8,34 @@ params <- read_rds("data/sim-params.Rds")
 
 
 # Setup -------
-
-# initialize mu {K x D x L}
-init_mu_pr = matrix(rep(apply(data$y, 2, mean), data$K),
-                     nrow = data$K,
-                     byrow = TRUE)
-
-mu <- init_mu <- array(NA, dim = c(data$K, data$D, data$L + 1))
-# introduce some noise so clusters are not equivalent
-noise = rnorm(data$K*data$D, sd = 0.05)
-
-# y = 1 corresponds to second array
-init_mu[, , data$L + 1] = (init_mu_pr - noise)
-# y = 0 corresponds to first matrix
-init_mu[, , data$L] = 1 - (init_mu_pr - noise)
+user_K <- data$K
 
 # initialize theta {K x 1}
-init_theta = rep(1/data$K, data$K)
+init_theta = rep(1/user_K, user_K)
 # init_theta = params$theta # chat by giving it  correct thetas?
-theta = rep(NA, data$K)
+
+# initialize mu {K x D x L} -- currently only supports L = 2
+Z <-  map_dbl(1:data$N,  ~which(Z_table[, .x] == 1))
+init_Z_table <- rmultinom(data$N, size = 1, prob = init_theta)
+init_Z <- map_dbl(1:data$N, ~which(init_Z_table[, .x] == 1))
+init_muhat <- flatten_dbl(map(1:user_K, ~colMeans(data$y[init_Z == .x, ])))
+
+init_mu_pr = matrix(init_muhat,
+                    nrow = user_K,
+                    byrow = TRUE)
+
+mu <- init_mu <- array(NA, dim = c(data$K, data$D, data$L + 1))
+
+# y = 1 corresponds to second array
+init_mu[, , data$L + 1] = init_mu_pr
+# y = 0 corresponds to first matrix
+init_mu[, , data$L] = 1 - init_mu_pr
+
+# container for theta
+theta = rep(NA, user_K)
 
 # container for zeta {N x K}
-zeta_hat = matrix(NA, nrow = data$N, ncol = data$K)
+zeta_hat = matrix(NA, nrow = data$N, ncol = user_K)
 
 
 
@@ -49,9 +55,9 @@ while (iter <= 25) {
   # E step
   for (i in 1:data$N) {
     # responsibility for each k
-    resp_i = rep(NA, data$K)
+    resp_i = rep(NA, user_K)
 
-    for (k in 1:data$K) {
+    for (k in 1:user_K) {
       # zeta_{ik} = theta_{k}prod^{D}_{j=1}prod^{L}_{l=0})(mu[k, j, (l + 1)]^(y[i, j] == l))
       resp_i[k] = foreach(j = 1:data$D, .combine = "*") %:%
         foreach(l = 0:(data$L), .combine = "*") %do% {
@@ -68,7 +74,7 @@ while (iter <= 25) {
 
   # M step
 
-  for (k in 1:data$K) {
+  for (k in 1:user_K) {
     sum_zeta_k = sum(zeta_hat[, k])
 
     # update theta
