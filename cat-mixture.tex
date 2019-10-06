@@ -205,11 +205,11 @@ section 11.2.2. Then it tries to implement it in stan.)
 Index individuals by \(i \in \{1:N\}\) and the universe of races
 excluding the top of the ticket as \(j \in \{1:D\}\). The data we
 observe is a length-\(D\) vector of votes \(\by_i\). \(y_{ij}\) is a
-discrete response value which can be 1 of \(M\) possibilities.
+discrete response value which can be 1 of \(L\) possibilities.
 
 \paragraph{Likelihood}
 
-For now, let's use \(M = 2\) so that each vote \(y_{ij}\) be a
+For now, let's use \(L = 2\) so that each vote \(y_{ij}\) be a
 \emph{binary} variable for splitting their ticket or not. \(y_{ij} = 1\)
 would mean voter \(i\) splitting their ticket in some office \(j\), with
 reference to a top of the ticket office like the President or Governor.
@@ -281,7 +281,8 @@ EM.\footnote{Thanks to Soichiro Yamauchi for deriving this algorithm in the orig
 The complete log-likelihood can be writen as
 
 \begin{align}
-\mathds{L}_{\mathrm{comp}}(\bmu, \bth | \bY, \bZ) & \prod^{N}_{i=} \\
+\text{L}_{\text{comp}}(\bmu, \bth | \bY, \bZ) &= \prod^{N}_{i=}\prod^{D}_{j=1}\prod^{K}_{k = 1}\prod^L_{\ell = 1}\Pr(y_{ij}=  1 | Z_i = k, \bmu)^{\mathds{1}(y_{ij} = \ell \mid Z_i = k)}\\
+\mathcal{L}_{\mathrm{comp}}(\bmu, \bth | \bY, \bZ) &= \sum^{N}_{i=1}\sum^{D}_{j=1}\sum^{K}_{k = 1}\sum^L_{\ell = 1}{\mathds{1}(y_{ij} = \ell \mid Z_i = k)}\log(\Pr(Y_{ij} = \ell \mid Z_i = k, \bmu))
 \end{align}
 
 \pagebreak
