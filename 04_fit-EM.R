@@ -1,5 +1,6 @@
-library(foreach)
 library(tidyverse)
+library(foreach)
+library(glue)
 
 data <- read_rds("data/sim-data.Rds")
 params <- read_rds("data/sim-params.Rds")
