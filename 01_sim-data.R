@@ -17,8 +17,8 @@ alpha <- (K:1)^2
 
 
 # cluster assignment
-pi <- rdirichlet(1, alpha)
-Z_table <- rmultinom(N, 1, pi)
+theta <- rdirichlet(1, alpha)
+Z_table <- rmultinom(N, 1, theta)
 Z <-  map_dbl(1:N,  ~which(Z_table[, .x] == 1))
 
 # setpi parameters
@@ -49,7 +49,7 @@ data <- list(D = D,
              alpha = alpha)
 
 # target params
-params <- list(theta = pi,
+params <- list(theta = theta,
                mu = mu,
                Z = Z)
 
