@@ -9,7 +9,8 @@ set.seed(02138)
 M <- 2L
 K <- 5L
 D <- 8L
-N <- 400L
+L <- 1L
+N <- 100L
 
 # hyperparameter
 alpha <- c(3, 1, 1, 1, 1)
@@ -36,13 +37,14 @@ stopifnot(all(map_lgl(mu, ~length(.x) == D)))
 # Generate data
 y <- array(NA, dim = c(N, D))
 for (i in 1:N) {
-  y[i, ] <- rbinom(D, size = 1, prob = mu[[Z[i]]])
+  y[i, ] <- rbinom(D, size = L, prob = mu[[Z[i]]])
 }
 
 # put together data
 data <- list(D = D,
              K = K,
              N = N,
+             L = L,
              y = y,
              alpha = alpha)
 
