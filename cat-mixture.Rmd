@@ -37,13 +37,13 @@ On the log scale,
 \paragraph{Cluster membership} The random variable \(z_i\) comes from a discrete distribution. We put a discrete prior for this, 
 
 \begin{align}
-p(z_i) &= \text{Cat}(\bpi)
+p(z_i) &= \text{Cat}(\bth)
 \end{align}
 
-Where the length-\(K\) simplex \(\bpi\) is called the mixing proportion.
+Where the length-\(K\) simplex \(\bth\) is called the mixing proportion.
 
-The benefit of this modeling exercise over that from a naive sample of \(N \times D\) Bernoullis is that we have captured the correlations between variables.\footnote{That dependency can be expressed as \(\mathds{E}(\by) = \sum_{k = 1}^{K} \pi_{k} \bmu_{k}\) and 
-\(\cov({\by}) = \sum_{k} \pi_{k} (\mathbf{\Sigma}_k \bmu_k\bmu_{k}^{\top}) - \mathds{E}(\by)\mathds{E}(\by)^\top\), where \(\Sigma_k = \text{diag}(\mu_{jk}(1 - \mu_{jk}))\).}
+The benefit of this modeling exercise over that from a naive sample of \(N \times D\) Bernoullis is that we have captured the correlations between variables.\footnote{That dependency can be expressed as \(\mathds{E}(\by) = \sum_{k = 1}^{K} \theta_{k} \bmu_{k}\) and 
+\(\cov({\by}) = \sum_{k} \theta_{k} (\mathbf{\Sigma}_k \bmu_k\bmu_{k}^{\top}) - \mathds{E}(\by)\mathds{E}(\by)^\top\), where \(\Sigma_k = \text{diag}(\mu_{jk}(1 - \mu_{jk}))\).}
 
 
 
@@ -53,7 +53,7 @@ The benefit of this modeling exercise over that from a naive sample of \(N \time
 \begin{align}
 p(z_i = k \mid \by_{i}, \bth) &=  \frac{p(z_i = k \mid \bth)\cdot p(\by_{i} \mid z_i = k, \bth)}{\sum^{K}_{k^\prime = 1} p(\by_{i} \mid z_i = k^\prime, \bth) \cdot p(z_i = k^\prime \mid \bth)}\\
 &\propto p(z_i = k \mid \bth)\cdot p(\by_{i} \mid z_i = k, \bth)\\
-&=  \pi_k\cdot\prod^{D}_{j=1}\mu_{jk}^{y_{ij}}(1 - \mu_{jk})^{1 - y_{ij}}
+&=  \theta_k\cdot\prod^{D}_{j=1}\mu_{jk}^{y_{ij}}(1 - \mu_{jk})^{1 - y_{ij}}
 \end{align}
 
 On the log scale, the normalized probability is computed as follows. 
@@ -65,12 +65,16 @@ On the log scale, the normalized probability is computed as follows.
 
 \pagebreak
 
-\section{Stan Code}
+\section{EM algorithm}
 
-The code below tries to adapt the Stan user manual on [Soft-K means](https://mc-stan.org/docs/2_20/stan-users-guide/soft-k-means.html) and [Summing out the responsibility mixture](https://mc-stan.org/docs/2_20/stan-users-guide/summing-out-the-responsibility-parameter.html).  My current attempt at the Stan code:
+We can estimate the key parameters \(\bmu\) and \(\bth\) by EM.\footnote{Thanks to Soichiro Yamauchi for deriving this algorithm in the original iteration.} 
 
-```{r, code = readLines("finite-mixture_stan-05-03.stan"), echo = TRUE, eval = FALSE}
-```
+The complete log-likelihood can be writen as 
+
+\begin{align}
+\mathds{L}_{\mathrm{comp}}(\bmu, \bth | \bY, \bZ) & \prod^{N}_{i=} \\
+\end{align}
+
 
 
 \pagebreak
@@ -177,8 +181,8 @@ Then, the simplex governing the parameter can be indexed as
 The values of \(W_j\) for offices \(j \in \{1:J\}\) can be modeled as a categorical variable, or more simply a Bernoulli
 
 \begin{align*}
-W \sim  \text{Bern}(\pi)
+W \sim  \text{Bern}(\theta)
 \end{align*}
 
-where \(\pi \in [0, 1].\)
+where \(\theta \in [0, 1].\)
 
