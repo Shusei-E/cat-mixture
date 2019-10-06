@@ -25,7 +25,7 @@ init_mu[, , data$L] = 1 - (init_mu_pr - noise)
 
 # initialize theta {K x 1}
 init_theta = rep(1/data$K, data$K)
-init_theta = params$theta # correct thetas
+# init_theta = params$theta # chat by giving it  correct thetas?
 theta = rep(NA, data$K)
 
 # container for zeta {N x K}
@@ -36,7 +36,7 @@ zeta_hat = matrix(NA, nrow = data$N, ncol = data$K)
 iter = 1
 store_iter = list()
 
-while (iter < 100) {
+while (iter < 51) {
   if (iter == 1) {
     theta = init_theta
     mu    = init_mu
@@ -87,30 +87,6 @@ while (iter < 100) {
 }
 
 
-# Diagnostics ---------
 
-# check sup-norm of changes in model parameters
-
-# extract parameters
-vector_params <- function(i, obj = store_iter) {
-  theta_vector <- obj[[i]]$theta
-  mu_vector <- obj[[i]]$mu[, , (data$L + 1)]
-  df_i <- tibble(param_id = 1:(length(theta_vector) + length(mu_vector)),
-                 type = c(rep("theta", length(theta_vector)),
-                          rep("mu",    length(mu_vector))),
-                 values = c(theta_vector, mu_vector)
-  )
-  return(df_i)
-}
-
-# stack all pre-post comparisons
-params_stacked <- foreach(t = 2:length(store_iter), .combine = "bind_rows") %do% {
-  params_t <- vector_params(t)
-  params_tminus1 <- vector_params(t - 1)
-
-  left_join(params_tminus1, params_t,
-            by = c("param_id", "type"),
-            suffix = c("_pre", "_now")) %>%
-    mutate(iter = t) %>%
-    mutate(diff = values_now - values_pre)
-}
+# Store -------
+write_rds(store_iter, "data/EM/sim-iterations.Rds")
