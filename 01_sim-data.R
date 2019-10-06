@@ -13,7 +13,7 @@ L <- 1L
 N <- 100L
 
 # hyperparameter
-alpha <- c(3, 1, 1, 1, 1)
+alpha <- c(3, rep(1, K - 1))
 
 
 # cluster assignment
@@ -49,7 +49,7 @@ data <- list(D = D,
              alpha = alpha)
 
 # target params
-params <- list(pi = pi,
+params <- list(theta = pi,
                mu = mu,
                Z = Z)
 
