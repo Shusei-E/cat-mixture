@@ -12,7 +12,7 @@ N <- 300L
 K <- 3L
 
 # hyperparameter
-alpha <- (K:1)
+alpha <- (K:1)^(1.5)
 
 
 # cluster assignment
@@ -22,8 +22,8 @@ Z <-  map_dbl(1:N,  ~which(Z_table[, .x] == 1))
 
 # set theta parameters
 mu <- list(
-  `1` = rep(0.05, D),
-  `2` = rep(0.95, D),
+  `1` = rep(0.10, D),
+  `2` = rep(0.90, D),
   `3` = rbeta(D, 2, 5)
 )
 
