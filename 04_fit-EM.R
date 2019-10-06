@@ -8,14 +8,13 @@ params <- read_rds("data/sim-params.Rds")
 
 
 # Setup -------
-user_K <- data$K
+user_K <- 2
 
 # initialize theta {K x 1}
 init_theta = rep(1/user_K, user_K)
 # init_theta = params$theta # chat by giving it  correct thetas?
 
 # initialize mu {K x D x L} -- currently only supports L = 2
-Z <-  map_dbl(1:data$N,  ~which(Z_table[, .x] == 1))
 init_Z_table <- rmultinom(data$N, size = 1, prob = init_theta)
 init_Z <- map_dbl(1:data$N, ~which(init_Z_table[, .x] == 1))
 init_muhat <- flatten_dbl(map(1:user_K, ~colMeans(data$y[init_Z == .x, ])))
@@ -24,7 +23,7 @@ init_mu_pr = matrix(init_muhat,
                     nrow = user_K,
                     byrow = TRUE)
 
-mu <- init_mu <- array(NA, dim = c(data$K, data$D, data$L + 1))
+mu <- init_mu <- array(NA, dim = c(user_K, data$D, data$L + 1))
 
 # y = 1 corresponds to second array
 init_mu[, , data$L + 1] = init_mu_pr
