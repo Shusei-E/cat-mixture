@@ -3,12 +3,12 @@ library(rstan)
 library(brms)
 library(glue)
 
-set.seed(021382)
+set.seed(02138)
 
 # dimensions
 L <- 1L
 D <- 8L
-N <- 100L
+N <- 500L
 K <- 5L
 
 # hyperparameter
@@ -22,10 +22,10 @@ Z <-  map_dbl(1:N,  ~which(Z_table[, .x] == 1))
 
 # setpi parameters
 mu <- list(
-  `1` = rep(.01, D),
-  `2` = rep(.05, D),
-  `3` = rep(.10, D),
-  `4` = rep(.99, D),
+  `1` = rep(0.01, D),
+  `2` = rep(0.05, D),
+  `3` = rep(0.10, D),
+  `4` = rep(0.99, D),
   `5` = rbeta(D, 2, 5)
 )
 
@@ -59,3 +59,13 @@ write_rds(params, "data/sim-params.Rds")
 k_vanilla <- kmeans(data$y, centers = K)
 kdf_vanilla <- as_tibble(k_vanilla$centers) %>%
   mutate(n = k_vanilla$size)
+
+# check sample mean | correct cluster assignment
+as_tibble(data$y) %>%
+  mutate(cluster = Z) %>%
+  group_by(cluster) %>%
+  summarize_if(is.double, mean)
+
+as_tibble(data$y) %>%
+  mutate(profile = glue("{V1}{V2}{V3}{V4}{V5}{V6}{V7}{V8}")) %>%
+  count(profile)
