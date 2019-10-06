@@ -3,6 +3,7 @@ texts
 charleston-2018.Rds
 sim-data.Rds
 sim-params.Rds
+sim-iterations.Rds
 data/mcmc
 *.html
 
