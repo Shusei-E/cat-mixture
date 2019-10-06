@@ -12,10 +12,10 @@ store_iter <- read_rds("data/EM/sim-iterations.Rds")
 
 # check sup-norm of changes in model parameters
 
-# extract parameters
-vector_params <- function(i, obj = store_iter) {
-  theta_vector <- obj[[i]]$theta
-  mu_vector <- obj[[i]]$mu[, , (data$L + 1)]
+# extract parameters from iteration t
+vector_params <- function(t, obj = store_iter) {
+  theta_vector <- obj[[t]]$theta
+  mu_vector <- obj[[t]]$mu[, , (data$L + 1)]
   df_i <- tibble(param_id = 1:(length(theta_vector) + length(mu_vector)),
                  type = c(rep("theta", length(theta_vector)),
                           rep("mu",    length(mu_vector))),
