@@ -31,12 +31,16 @@ theta = rep(NA, data$K)
 # container for zeta {N x K}
 zeta_hat = matrix(NA, nrow = data$N, ncol = data$K)
 
+
+
+
+
 # fit EM -----------
 # iterations
 iter = 1
 store_iter = list()
 
-while (iter < 51) {
+while (iter <= 25) {
   if (iter == 1) {
     theta = init_theta
     mu    = init_mu
@@ -50,7 +54,7 @@ while (iter < 51) {
     for (k in 1:data$K) {
       # zeta_{ik} = theta_{k}prod^{D}_{j=1}prod^{L}_{l=0})(mu[k, j, (l + 1)]^(y[i, j] == l))
       resp_i[k] = foreach(j = 1:data$D, .combine = "*") %:%
-        foreach(l = 0:(data$L - 1), .combine = "*") %do% {
+        foreach(l = 0:(data$L), .combine = "*") %do% {
           mu[k, j, (l + 1)]^(data$y[i, j] == l)
         }
     }
