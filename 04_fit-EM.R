@@ -2,10 +2,12 @@ library(tidyverse)
 library(foreach)
 library(glue)
 
+# Data --------
 data <- read_rds("data/sim-data.Rds")
 params <- read_rds("data/sim-params.Rds")
 
 
+# Setup -------
 
 # initialize mu {K x D x L}
 init_mu_pr = matrix(rep(apply(data$y, 2, mean), data$K),
@@ -29,7 +31,7 @@ theta = rep(NA, data$K)
 # container for zeta {N x K}
 zeta_hat = matrix(NA, nrow = data$N, ncol = data$K)
 
-
+# fit EM -----------
 # iterations
 iter = 1
 store_iter = list()
@@ -84,5 +86,31 @@ while (iter < 100) {
   iter <- iter + 1
 }
 
-# check convergence
 
+# Diagnostics ---------
+
+# check sup-norm of changes in model parameters
+
+# extract parameters
+vector_params <- function(i, obj = store_iter) {
+  theta_vector <- obj[[i]]$theta
+  mu_vector <- obj[[i]]$mu[, , (data$L + 1)]
+  df_i <- tibble(param_id = 1:(length(theta_vector) + length(mu_vector)),
+                 type = c(rep("theta", length(theta_vector)),
+                          rep("mu",    length(mu_vector))),
+                 values = c(theta_vector, mu_vector)
+  )
+  return(df_i)
+}
+
+# stack all pre-post comparisons
+params_stacked <- foreach(t = 2:length(store_iter), .combine = "bind_rows") %do% {
+  params_t <- vector_params(t)
+  params_tminus1 <- vector_params(t - 1)
+
+  left_join(params_tminus1, params_t,
+            by = c("param_id", "type"),
+            suffix = c("_pre", "_now")) %>%
+    mutate(iter = t) %>%
+    mutate(diff = values_now - values_pre)
+}
