@@ -6,6 +6,13 @@ library(glue)
 data <- read_rds("data/sim-data.Rds")
 params <- read_rds("data/sim-params.Rds")
 
+# Unique profile and speed up? ----
+fast <- TRUE
+if (!fast) {
+  data$U <- data$N
+  data$n_u <- rep(1, data$N)
+  data$uy <- data$y
+}
 
 # Setup -------
 user_K <- 2
@@ -34,7 +41,7 @@ init_mu[, , data$L] = 1 - init_mu_pr
 theta = rep(NA, user_K)
 
 # container for zeta {N x K}
-zeta_hat = matrix(NA, nrow = data$N, ncol = user_K)
+zeta_hat = matrix(NA, nrow = data$U, ncol = user_K)
 
 
 
@@ -52,38 +59,39 @@ while (iter <= 50) {
   }
 
   # E step
-  for (i in 1:data$N) {
-    # responsibility for each k
-    resp_i = rep(NA, user_K)
+  for (u in 1:data$U) {
+    # responsibility of type k
+    resp_u = rep(NA, user_K)
 
     for (k in 1:user_K) {
       # zeta_{ik} = theta_{k}prod^{D}_{j=1}prod^{L}_{l=0})(mu[k, j, (l + 1)]^(y[i, j] == l))
-      resp_i[k] = foreach(j = 1:data$D, .combine = "*") %:%
+      resp_u[k] = foreach(j = 1:data$D, .combine = "*") %:%
         foreach(l = 0:(data$L), .combine = "*") %do% {
-          mu[k, j, (l + 1)]^(data$y[i, j] == l)
+          mu[k, j, (l + 1)]^(data$uy[u, j] == l)
         }
     }
 
-    numer_i = theta * resp_i # K x 1
-    denom_i_k = sum(theta %*% resp_i) # scalar
+    numer_u = theta * resp_u # K x 1
+    denom_u_k = sum(theta %*% resp_u) # scalar
 
-    zeta_i = numer_i / denom_i_k # K x 1
-    zeta_hat[i, ] = zeta_i
+    zeta_u = numer_u / denom_u_k # K x 1
+    zeta_hat[u, ] = zeta_u
   }
 
   # M step
 
   for (k in 1:user_K) {
-    sum_zeta_k = sum(zeta_hat[, k])
+    sum_zeta_k = data$n_u %*% zeta_hat[, k]
 
     # update theta
-    theta[k] = (1/data$N)*sum_zeta_k
+    theta[k] = (1/data$U)*sum_zeta_k
 
     # update mu
     for (l in 0:(data$L - 1)) {
-      y_matches_l = data$y[, j] == l
-      mu[k, j, (l + 1)]  = sum(y_matches_l %*% zeta_hat[, k]) / sum_zeta_k
+      y_matches_l = (data$uy[, j] == l)
+      mu[k, j, (l + 1)]  = sum(data$n_u * y_matches_l * zeta_hat[, k]) / sum_zeta_k
     }
+
     # last category is 1 minus the rest
     mu[k, j, (data$L + 1)] =  1 - sum(mu[k, j, 1:(data$L)])
   }

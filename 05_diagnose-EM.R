@@ -28,15 +28,15 @@ loglik_obs <- function(t, obj = store_iter) {
   user_K <- length(theta_t)
 
   # for each N
-  for (i in 1:data$N) {
+  for (u in 1:data$U) {
     resp_i <- c()
     for (k in 1:user_K) {
       resp_i[k] = foreach(j = 1:data$D, .combine = "+") %:%
         foreach(l = 0:(data$L), .combine = "+") %do% {
-          (data$y[i, j] == l)*log(mu_t[k, j, (l + 1)])
+          (data$uy[u, j] == l)*log(mu_t[k, j, (l + 1)])
         }
     }
-    loglik_obs[i] <- prod(log(theta_t) + resp_i[1:user_K])
+    loglik_obs[u] <- data$n_u[u] * prod(log(theta_t) + resp_i[1:user_K])
   }
   sum(loglik_obs)
 }

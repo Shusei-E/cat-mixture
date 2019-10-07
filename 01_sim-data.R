@@ -37,12 +37,30 @@ for (i in 1:N) {
   y[i, ] <- rbinom(D, size = L, prob = mu[[Z[i]]])
 }
 
+# unique profiles
+unique_y <- as_tibble(data$y) %>%
+  mutate(voter = 1:n()) %>%
+  pivot_longer(-voter, names_to = "j", values_to = "y") %>%
+  group_by(voter) %>%
+  summarize(profile = str_c(y, collapse = "")) %>%
+  count(profile, name = "n_u") %>%
+  separate(profile, into = str_c("v", 1:D), sep = 1:D) %>%
+  mutate_all(as.integer)
+
+unique_y_mat <- unique_y[, 1:D]
+n_u <- unique_y$n_u
+U <- length(n_u)
+
+
 # put together data
 data <- list(D = D,
              K = K,
              N = N,
              L = L,
              y = y,
+             uy = unique_y_mat,
+             n_u = n_u,
+             U = U,
              alpha = alpha)
 
 # target params
@@ -63,7 +81,3 @@ as_tibble(data$y) %>%
   mutate(cluster = Z) %>%
   group_by(cluster) %>%
   summarize_all(mean)
-
-as_tibble(data$y) %>%
-  mutate(profile = glue("{V1}{V2}{V3}{V4}{V5}{V6}{V7}{V8}")) %>%
-  count(profile, sort = TRUE)
