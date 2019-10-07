@@ -2,8 +2,8 @@
 \usepackage{sk_memo}
 
 % Parmaters --
-\title{ \Large\textbf{Clustering with Multinomial Outcomes}}
-\author{\normalsize  Shiro Kuriwaki\thanks{Thanks to Shusei Eshima, Sooahn Shin, and Soichiro Yamauchi for their help.} }
+\title{ \Large\textbf{Clustering Voter Types with Multinomial Outcomes}}
+\author{\normalsize  Shiro Kuriwaki\thanks{Thanks to Shusei Eshima, Max Goplerud, Sooahn Shin, and Soichiro Yamauchi for their generous time and help.} }
 
 \date{\normalsize October 2019}
 
@@ -28,7 +28,7 @@ discrete response value, \(Y_{ij} \in \{0, ..., L\}\). For now, let's use \(L = 
 \paragraph{Parameters}
 
 
-Individuals are endowed with a cluster (or type) \(k \in 1:K\), which is drawn from 
+Individuals are endowed with a cluster (or type) \(k \in \{1, ..., K\}\), which is drawn from 
 \begin{align*}
 Z_i \sim  \text{Cat}(\bth),
 \end{align*}
@@ -69,7 +69,7 @@ Because the model is simple enough, we can derive an algorithm to obtain the glo
 
 
 \begin{align}
-\mathbf{L}_{\text{comp}}(\bmu, \bth | \bY, \bZ) =& \prod^{N}_{i=1}\prod^{D}_{j=1} \prod^{K}_{k = 1}\Pr(Z_i = k)  \prod^L_{\ell = 1}\Pr(Y_{ij}=  1 | Z_i = k, \bmu)^{\bm{1}(Y_{ij} = \ell \mid Z_i = k)}\nonumber\\
+\mathbf{L}_{\text{comp}}(\bmu, \bth | \bY, \bZ) =& \prod^{N}_{i=1}\prod^{D}_{j=1} \prod^{K}_{k = 1}\Pr(Z_i = k | \bth)  \prod^L_{\ell = 1}\Pr(Y_{ij}=  1 | Z_i = k, \bmu)^{\bm{1}(Y_{ij} = \ell \mid Z_i = k)}\nonumber\\
 \mathcal{L}_{\text{comp}}(\bmu, \bth|\bY, \bZ)
 & = \sum^{N}_{i=1}\sum^{D}_{j=1}\sum^{K}_{k=1}\sum^{2}_{\ell = 0}
 \bm{1}\{Y_{ij} = \ell, Z_{i} = k\}\Big\{
@@ -109,9 +109,7 @@ The M-step is derived by taking the derivatives of \(\E{\mathcal{L}_{\text{comp}
 
 \paragraph{EM Implementation} We first need to set initial values for \(\bmu\) and \(\bth\). I do this by letting \(\bth^{(0)} = \left(\frac{1}{K},...\frac{1}{K}\right)\), randomly assigning an initial cluster assignment \(Z_i^\prime \sim \text{Cat}(\bth^{(0)})\), and setting the initial \(\bmu\) by the sample means of the data within those initial assignments, \(\mu_{jk}^{(0)} = \frac{\sum_{i=1}^{N}\ind{Y_{ij} = 1}\ind{Z_{i}^{\prime} = k}}{\sum_{i=1}^{N}\ind{Z_{i}^{\prime} = k}}.\) 
 
-Then we iterate as follows. 
-
-For each voter \(i\), compute the probability that they belong in cluster \(k\) (E-step):
+Then we iterate as follows. For each voter \(i\), compute the probability that they belong in cluster \(k\) (E-step):
 
 \begin{align}
 \zeta_{ik} \leftarrow \frac{\bm{\theta}_{k}\prod^{D}_{j=1}\bm{\mu}_{kj,Y_{ij}}}
@@ -140,9 +138,28 @@ So the log-likelihood is
 \mathcal{L}_{\text{obs}} &= \sum^{N}_{i=1}\left[\prod^{K}_{k=1}\left\{\log\theta_{k} + \sum^D_{j=1}\sum^L_{\ell=1}\ind{Y_{ij} = \ell}\log(\mu_{kj\ell})\right\}\right]\label{eq:obsloglik}
 \end{align}
 
-Calculating (eq. \ref{eq:obsloglik}) is computationally intensive, so a quick way to check convergence is to track the maximum of the change in parameters which are all on the probability scale, i.e. \(\max\left\{|\widehat\theta^{(t + 1)}_{1} - \widehat\theta^{(t)}_{1}|, ..., |\widehat\mu^{(t + 1)}_{K,D} - \widehat\mu^{(t)}_{K,D}|\right\}\)
+Calculating eq. (\ref{eq:obsloglik}) is computationally intensive, so a quick way to check convergence is to track the maximum of the change in parameters which are all on the probability scale, i.e. \(\max\left\{|\widehat\theta^{(t + 1)}_{1} - \widehat\theta^{(t)}_{1}|, ..., |\widehat\mu^{(t + 1)}_{K,D} - \widehat\mu^{(t)}_{K,D}|\right\}\)
 
 \paragraph{Speed-Ups} Because this EM algorithm deals with discrete data, the algorithm needs only sufficient statistics. In our setting the unique number of voting profiles is much smaller than the number of observations, because vote vectors follow a systematic pattern and most votes are straight-ticket votes. Therefore, we can re-format the dataset so that each row is a unique combination.
+
+Let \(u \in \{1, ..., U\}\) index the unique voting profiles, and \(n_{u}\) be the number of such profiles in the data. 
+
+We repeat the EM algorithm described earlier. For each profile \(u\), compute the probability that it belong in type \(k\):
+
+\begin{align}
+\zeta_{uk} \leftarrow \frac{\bm{\theta}_{k}\prod^{D}_{j=1}\bm{\mu}_{kj,Y_{uj}}}
+{\sum^{K}_{k^\prime=1}\bm{\theta}_{k^\prime}\prod^{D}_{j=1}\bm{\mu}_{k^\prime j,Y_{uj}}}
+\end{align}
+
+Then given those type probabilities, update with
+
+\begin{align}
+\widehat{\theta}_{k} &\leftarrow \frac{1}{U}\sum^U_{u = 1}n_{u}\widehat{\zeta}_{uk}\\
+\widehat{\mu}_{jk1} &\leftarrow\frac{\sum^U_{u=1}n_{u}\ind{Y_{uj} = 1}\widehat{\zeta}_{uk}}{\sum^{U}_{u=1}\widehat{n_{u}\zeta}_{uk}}\\
+\end{align}
+
+We repeat this until convergence.
+
 
 
 
