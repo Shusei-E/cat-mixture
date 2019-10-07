@@ -69,15 +69,16 @@ params_stacked <- foreach(t = 2:length(store_iter), .combine = "bind_rows") %do%
             by = c("param_id", "type"),
             suffix = c("_pre", "_now")) %>%
     mutate(iter = t) %>%
-    mutate(diff = values_now - values_pre)
+    mutate(diff = abs(values_now - values_pre))
 }
 
 
 # plot max of diff
 params_stacked %>%
+  mutate(llobs_scale = loglik_obs / (data$N*data$D)) %>%
   group_by(iter) %>%
   summarize(`Maximum Change in Parameter (probability scale)` = max(diff),
-            `Observed Log Likelihood` = unique(loglik_obs)) %>%
+            `Observed Log Likelihood (per data point)` = unique(llobs_scale)) %>%
   pivot_longer(cols = -c(iter), names_to = "metric", values_to = "value") %>%
   ggplot(aes(iter, value)) +
   facet_rep_wrap(~metric, scales = "free_y", ncol = 1) +
@@ -88,7 +89,8 @@ params_stacked %>%
   theme(plot.background = element_rect(color = NA),
         axis.line = element_line(color = "black"),
         plot.title = element_text(hjust = 0.5, face = "bold"),
-        plot.caption = element_text(size = 6)) +
+        plot.caption = element_text(size = 6),
+        strip.background = element_rect(fill = "lightgray")) +
   labs(x = "EM Iteration",
        y = "Metric",
        caption = glue("Note: The parmater vector is the estimated theta's and mu's combined.
