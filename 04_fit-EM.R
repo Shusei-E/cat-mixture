@@ -15,7 +15,7 @@ if (!fast) {
 }
 
 # Setup -------
-user_K <- 2
+user_K <- 3
 
 # initialize theta {K x 1}
 init_theta = rep(1/user_K, user_K)
@@ -52,7 +52,7 @@ zeta_hat = matrix(NA, nrow = data$U, ncol = user_K)
 iter = 1
 store_iter = list()
 
-while (iter <= 50) {
+while (iter <= 10) {
   if (iter == 1) {
     theta = init_theta
     mu    = init_mu
@@ -67,7 +67,7 @@ while (iter <= 50) {
       # zeta_{ik} = theta_{k}prod^{D}_{j=1}prod^{L}_{l=0})(mu[k, j, (l + 1)]^(y[i, j] == l))
       resp_u[k] = foreach(j = 1:data$D, .combine = "*") %:%
         foreach(l = 0:(data$L), .combine = "*") %do% {
-          mu[k, j, (l + 1)]^(data$uy[u, j] == l)
+          (mu[k, j, (l + 1)])^(data$uy[u, j] == l)
         }
     }
 
@@ -85,15 +85,23 @@ while (iter <= 50) {
 
     # update theta
     theta[k] = (1/data$U)*sum_zeta_k
+    # correct theta
+    # theta[k] = params$theta[k]
 
     # update mu
-    for (l in 0:(data$L - 1)) {
-      y_matches_l = (data$uy[, j] == l)
-      mu[k, j, (l + 1)]  = sum(data$n_u * y_matches_l * zeta_hat[, k]) / sum_zeta_k
+    for (j in 1:data$D) {
+      for (l in data$L:1) {
+        # 1(Y_{ij} = ell)
+        y_matches_l = (data$uy[, j] == l)
+        # update mu
+        mu[k, j, (l + 1)]  = sum(data$n_u * y_matches_l * zeta_hat[, k]) /
+          sum_zeta_k
+      }
+
+      # last category is 1 minus the rest
+      mu[k, j, (0 + 1)] =  1 - sum(mu[k, j, ((1:data$L) + 1)])
     }
 
-    # last category is 1 minus the rest
-    mu[k, j, (data$L + 1)] =  1 - sum(mu[k, j, 1:(data$L)])
   }
 
   # store each iter
