@@ -45,7 +45,7 @@ zeta_hat = matrix(NA, nrow = data$N, ncol = user_K)
 iter = 1
 store_iter = list()
 
-while (iter <= 25) {
+while (iter <= 50) {
   if (iter == 1) {
     theta = init_theta
     mu    = init_mu
