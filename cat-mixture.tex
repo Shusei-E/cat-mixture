@@ -28,23 +28,22 @@ discrete response value, \(Y_{ij} \in \{0, ..., L\}\). For now, let's use \(L = 
 \paragraph{Parameters}
 
 
-Individuals are endowed with a cluster (or type) \(k \in \{1, ..., K\}\), which is drawn from 
+Individuals are endowed with a cluster (or type) \(k \in \{1, ..., K\}\), which is drawn from a distribution governed by length-\(K\) simplex \(\bth\) (the mixing proportion).
 \begin{align*}
 Z_i \sim  \text{Cat}(\bth),
 \end{align*}
-Where the length-\(K\) simplex \(\bth\) is called the mixing proportion.
 
-Let \(\mu_{k, j} \in [0, 1]\) be the parameter that governs each observation through the cluster assignment. Therefore \(\bmu\) is a \(\{K \times D \times (L + 1)\}\) array, where 
+Set \(\mu_{k, j} \in [0, 1]\) be the parameter that governs the outcome of each type. Therefore \(\bmu\) is a \(\{K \times D \times (L + 1)\}\) array, where 
 
  \[\pr{Y_{ij} = \ell \mid Z_i = k} = \mu_{kj\ell}.\]
 
-In other words, for each individual who belongs in type \(k\), we can their observed vector \(\bY_{i} \mid Z_i = k\) is governed by a length-\(D\) parameter vector \(\bmu_{k}\). Therefore, we can express the joint density as follows. 
+In other words, for each individual (who is  type \(k\)), their observed vector \(\bY_{i}\) is governed by a length-\(D\) parameter \(\bmu_{k}\). Therefore, we can express the joint density as follows. 
 
 \begin{align}
-\pr{\bY_{i} \mid Z_{i} = k, \bth} = \prod^{D}_{j = 1} \text{Cat}(Y_{ij} | \bmu_k) = \prod^{D}_{j = 1}\prod^{L}_{\ell=1} \mu_{jk\ell}^{\ind{Y_{ij} = \ell}}
+\pr{\bY_{i} \mid Z_{i} = k, \bth} = \prod^{D}_{j = 1} \text{Cat}(Y_{ij} | \bmu_k) = \prod^{D}_{j = 1}\prod^{L}_{\ell=0} \mu_{jk\ell}^{\ind{Y_{ij} = \ell}}
 \end{align}
 
-In our \(L = 1\) case, the Categorical reduces to a Bernoulli and we can get rid of the \(\ell\) index altogether to let  \(\mu_{jk} \equiv \mu_{jk,(\ell=1)} = 1 - \mu_{jk,(\ell=0)}\) and so
+In our binary case, the Categorical reduces to a Bernoulli:
 
 \begin{align}
 \pr{\bY_{i} \mid Z_{i} = k, \bth} = \prod^{D}_{j=1}\mu_{jk}^{Y_{ij}}(1 - \mu_{jk})^{1- Y_{ij}}
@@ -69,7 +68,7 @@ Because the model is simple enough, we can derive an algorithm to obtain the glo
 
 
 \begin{align}
-\mathbf{L}_{\text{comp}}(\bmu, \bth | \bY, \bZ) =& \prod^{N}_{i=1}\prod^{D}_{j=1} \prod^{K}_{k = 1}\Pr(Z_i = k | \bth)  \prod^L_{\ell = 1}\Pr(Y_{ij}=  1 | Z_i = k, \bmu)^{\bm{1}(Y_{ij} = \ell \mid Z_i = k)}\nonumber\\
+\mathbf{L}_{\text{comp}}(\bmu, \bth | \bY, \bZ) =& \prod^{N}_{i=1}\prod^{D}_{j=1} \prod^{K}_{k = 1}\Pr(Z_i = k | \bth)  \prod^L_{\ell = 0}\Pr(Y_{ij}=  1 | Z_i = k, \bmu)^{\bm{1}(Y_{ij} = \ell \mid Z_i = k)}\nonumber\\
 \mathcal{L}_{\text{comp}}(\bmu, \bth|\bY, \bZ)
 & = \sum^{N}_{i=1}\sum^{D}_{j=1}\sum^{K}_{k=1}\sum^{2}_{\ell = 0}
 \bm{1}\{Y_{ij} = \ell, Z_{i} = k\}\Big\{
@@ -126,7 +125,7 @@ Then given those cluster probabilities, update the parameters with the MLE (M-st
 
 We repeat this until convergence.
 
-\paragraph{Convergence} We evaluate covergence by the observed log likelihood, 
+\paragraph{Convergence} We evaluate convergence by the observed log likelihood, 
 
 \begin{align*}
 \mathbf{L}_{\text{obs}} &= \prod^{N}_{i=1}\sum^K_{k=1}\theta_k f_{k}(\bY_{i} | \bmu_{k})\\
@@ -142,12 +141,12 @@ Calculating eq. (\ref{eq:obsloglik}) is computationally intensive, so a quick wa
 
 \paragraph{Speed-Ups} Because this EM algorithm deals with discrete data, the algorithm needs only sufficient statistics. In our setting the unique number of voting profiles is much smaller than the number of observations, because vote vectors follow a systematic pattern and most votes are straight-ticket votes. Therefore, we can re-format the dataset so that each row is a unique combination.
 
-Let \(u \in \{1, ..., U\}\) index the unique voting profiles, and \(n_{u}\) be the number of such profiles in the data. 
+Let \(u \in \{1, ..., U\}\) index the unique voting profiles, and \(n_{u}\) be the number of such profiles in the data.  We re-cycle the objects \(\bY\) and \(\bm\zeta\) so that each row indexes profiles rather than voters.
 
 We repeat the EM algorithm described earlier. For each profile \(u\), compute the probability that it belong in type \(k\):
 
 \begin{align}
-\zeta_{uk} \leftarrow \frac{\bm{\theta}_{k}\prod^{D}_{j=1}\bm{\mu}_{kj,Y_{uj}}}
+\widehat\zeta_{uk} \leftarrow \frac{\bm{\theta}_{k}\prod^{D}_{j=1}\bm{\mu}_{kj,Y_{uj}}}
 {\sum^{K}_{k^\prime=1}\bm{\theta}_{k^\prime}\prod^{D}_{j=1}\bm{\mu}_{k^\prime j,Y_{uj}}}
 \end{align}
 
@@ -155,10 +154,15 @@ Then given those type probabilities, update with
 
 \begin{align}
 \widehat{\theta}_{k} &\leftarrow \frac{1}{U}\sum^U_{u = 1}n_{u}\widehat{\zeta}_{uk}\\
-\widehat{\mu}_{jk1} &\leftarrow\frac{\sum^U_{u=1}n_{u}\ind{Y_{uj} = 1}\widehat{\zeta}_{uk}}{\sum^{U}_{u=1}\widehat{n_{u}\zeta}_{uk}}\\
+\widehat{\mu}_{jk1} &\leftarrow\frac{\sum^U_{u=1}n_{u}\ind{Y_{uj} = 1}\widehat{\zeta}_{uk}}{\sum^{U}_{u=1}n_{u}\widehat{\zeta}_{uk}}\\
 \end{align}
 
-We repeat this until convergence.
+And the log-likelihood will also only require looping through the profiles:
+
+So the log-likelihood is
+\begin{align}
+\mathcal{L}_{\text{obs}} &= \sum^{U}_{u=1}\left[n_u\prod^{K}_{k=1}\left\{\log\theta_{k} + \sum^D_{j=1}\sum^L_{\ell=1}\ind{Y_{uj} = \ell}\log(\mu_{kj\ell})\right\}\right]\label{eq:obsloglik}
+\end{align}
 
 
 
