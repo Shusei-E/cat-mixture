@@ -115,12 +115,11 @@ Then we iterate as follows. For each voter \(i\), compute the probability that t
 {\sum^{K}_{k^\prime=1}\bm{\theta}_{k^\prime}\prod^{D}_{j=1}\bm{\mu}_{k^\prime j,Y_{ij}}}
 \end{align}
 
-Then given those cluster probabilities, update the parameters with the MLE (M-step)
+Then given those type probabilities, update the parameters with the MLE (M-step)
 
 \begin{align}
-\widehat{\theta}_{k} &\leftarrow \frac{1}{N}\sum^N_{i = 1}\widehat{\zeta}_{ik}\\
-\widehat{\mu}_{jk1} &\leftarrow\frac{\sum^N_{i=1}\ind{Y_{ij} = 1}\widehat{\zeta}_{ik}}{\sum^{N}_{i=1}\widehat{\zeta}_{ik}}\\
-\widehat{\mu}_{jk0} &= 1 - \widehat{\mu}_{jk1}
+\text{for each \(k\), update: }~~~  \widehat{\theta}_{k} &\leftarrow \frac{1}{N}\sum^N_{i = 1}\widehat{\zeta}_{ik} \\
+\text{for each \(k, j, \ell\), update: }~~~ \widehat{\mu}_{jk\ell} &\leftarrow\frac{\sum^N_{i=1}\ind{Y_{ij} = \ell}\widehat{\zeta}_{ik}}{\sum^{N}_{i=1}\widehat{\zeta}_{ik}}
 \end{align}
 
 We repeat this until convergence.
@@ -146,15 +145,15 @@ Let \(u \in \{1, ..., U\}\) index the unique voting profiles, and \(n_{u}\) be t
 We repeat the EM algorithm described earlier. For each profile \(u\), compute the probability that it belong in type \(k\):
 
 \begin{align}
-\widehat\zeta_{uk} \leftarrow \frac{\bm{\theta}_{k}\prod^{D}_{j=1}\bm{\mu}_{kj,Y_{uj}}}
+\text{for each \(u, k\), update: }~~~   \widehat\zeta_{uk} \leftarrow \frac{\bm{\theta}_{k}\prod^{D}_{j=1}\bm{\mu}_{kj,Y_{uj}}}
 {\sum^{K}_{k^\prime=1}\bm{\theta}_{k^\prime}\prod^{D}_{j=1}\bm{\mu}_{k^\prime j,Y_{uj}}}
 \end{align}
 
 Then given those type probabilities, update with
 
 \begin{align}
-\widehat{\theta}_{k} &\leftarrow \frac{1}{U}\sum^U_{u = 1}n_{u}\widehat{\zeta}_{uk}\\
-\widehat{\mu}_{jk1} &\leftarrow\frac{\sum^U_{u=1}n_{u}\ind{Y_{uj} = 1}\widehat{\zeta}_{uk}}{\sum^{U}_{u=1}n_{u}\widehat{\zeta}_{uk}}\\
+\text{for each \(k\), update: }~~~   \widehat{\theta}_{k} &\leftarrow \frac{1}{N}\sum^U_{u = 1}n_{u}\widehat{\zeta}_{uk}\\
+\text{for each \(k, j, \ell\), update: }~~~   \widehat{\mu}_{jk\ell} &\leftarrow\frac{\sum^U_{u=1}n_{u}\ind{Y_{uj} = \ell}\widehat{\zeta}_{uk}}{\sum^{U}_{u=1}n_{u}\widehat{\zeta}_{uk}}
 \end{align}
 
 And the log-likelihood will also only require looping through the profiles:
