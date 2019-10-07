@@ -84,7 +84,7 @@ while (iter <= 10) {
     sum_zeta_k = data$n_u %*% zeta_hat[, k]
 
     # update theta
-    theta[k] = (1/data$U)*sum_zeta_k
+    theta[k] = (1/data$N)*sum_zeta_k
     # correct theta
     # theta[k] = params$theta[k]
 
@@ -108,7 +108,7 @@ while (iter <= 10) {
   store_iter[[iter]] = list(mu = mu, theta = theta, zeta = zeta_hat)
   cat(glue("iter: {iter}"), "\n")
 
-  iter <- iter + 1
+  iter = iter + 1
 }
 
 
