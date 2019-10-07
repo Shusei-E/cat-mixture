@@ -4,6 +4,8 @@ charleston-2018.Rds
 sim-data.Rds
 sim-params.Rds
 sim-iterations.Rds
+cluster_votes.pdf
+cluster_votes.tex
 data/mcmc
 *.html
 
@@ -16,6 +18,7 @@ data/mcmc
 
 
 # TEX
+*.synctex.gz
 *.aux
 *.lof
 *.log
