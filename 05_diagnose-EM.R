@@ -95,4 +95,4 @@ params_stacked %>%
        y = "Metric",
        caption = glue("Note: The parmater vector is the estimated theta's and mu's combined.
                       Higher observed log likelihood and llower sup-norms both indicate better fit."))
-ggsave("figures/sim_EM_change-in-params.png", w = 4, h = 4)
+ggsave("figures/sim_EM_change-in-params.pdf", w = 4, h = 4)
