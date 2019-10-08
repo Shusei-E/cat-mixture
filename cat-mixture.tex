@@ -30,17 +30,15 @@ In the simplest case \(L = 1\), we code each vote \(y_{ij}\) an indicator for sp
 \paragraph{Parameters}
 
 
-Individuals are endowed with a cluster (or type) \(k \in \{1, ..., K\}\), which is drawn from a distribution governed by length-\(K\) simplex \(\bth\) (the mixing proportion).
+There are two sets of parameters: \(\bmu\), the propensity for a given outcome for a given type of voter in a given office; and \(\bth\), the mixing proportions of each type.  Individuals are endowed with a cluster (or type) \(k \in \{1, ..., K\}\), which is drawn from a distribution governed by length-\(K\) simplex \(\bth\) (the mixing proportion).
 \begin{align*}
 Z_i \sim  \text{Cat}(\bth),
 \end{align*}
 
 Set \(\mu_{k, j} \in [0, 1]\) be the parameter that governs the outcome of each type. Therefore \(\bmu\) is a \(\{K \times D \times (L + 1)\}\) array, where 
-
  \[\pr{Y_{ij} = \ell \mid Z_i = k} = \mu_{kj\ell}.\]
 
 In other words, for each individual (who is  type \(k\)), their observed vector \(\bY_{i}\) is governed by a length-\(D\) parameter \(\bmu_{k}\). Therefore, we can express the joint density as follows. 
-
 \begin{align}
 \pr{\bY_{i} \mid Z_{i} = k, \bth} = \prod^{D}_{j = 1} \text{Cat}(Y_{ij} | \bmu_k) = \prod^{D}_{j = 1}\prod^{L}_{\ell=0} \mu_{jk\ell}^{\ind{Y_{ij} = \ell}}
 \end{align}
@@ -67,20 +65,17 @@ This mixture model lends itself to clustering analysis such as \(K\)-means. Alth
 Because the model is simple enough, we can derive an algorithm to obtain the global solution for the parameters.\footnote{Thanks to Soichiro Yamauchi for deriving this algorithm in the original iteration.} An EM implementation makes it possible to handle extensions, such as systematic missing data, multinomial outcomes, and covariates. 
 
 \paragraph{Complete Likelihood} If we knew the cluster assignment, we would be able to write the complete log-likelihood (\(\mathcal{L}_{\text{comp}}\)). First start with the joint probability of the outcome data and the cluster assignment:
-
 \begin{align}
 \Pr(\bY, \bZ \mid \bmu, \bth) &= \Pr(\bY \mid \bZ, \bmu, \bth)\Pr(\bZ \mid \bth)\nonumber\\
 &= \prod^{N}_{i=1}\prod^{D}_{j=1}\Pr(Y_{ij} \mid \bZ, \bmu) \prod^N_{i=1}\Pr(Z_i \mid \bth)\nonumber\\
-&= \prod^{N}_{i=1}\prod^{D}_{j=1}\prod^{K}_{k=1}\left\{\prod^{L}_{\ell=0}\pr{Y_{ij} = \ell | Z_i = k}\right\}^{\ind{Z_i=k}} \prod^N_{i=1}\prod^K_{k=1}\theta_{k}^{\ind{Z_i = k}}\nonumber \\
+&= \prod^{N}_{i=1}\prod^{D}_{j=1}\prod^{K}_{k=1}\left\{\prod^{L}_{\ell=0}\pr{Y_{ij} = \ell | Z_i = k}\right\}^{\ind{Z_i=k}} \prod^N_{i=1}\prod^K_{k=1}\pr{Z_i = {k} \mid \bth}^{\ind{Z_i = k}}\nonumber \\
 &= \prod^{N}_{i=1}\prod^{D}_{j=1}\prod^{K}_{k=1}\prod^{L}_{\ell=0}\pr{Y_{ij} = \ell \mid Z_{i} = k, \bmu}^{\ind{Y_{ij} = \ell, Z_i = k}} \prod^N_{i=1}\prod^K_{k=1}\pr{Z_i = {k} \mid \bth}^{\ind{Z_i = k}}\nonumber
 \end{align}
 
 Therefore, the complete log-likelihood is computed by taking the log of this:
-
-
 \begin{align}
 \mathcal{L}_{\text{comp}}(\bmu, \bth|\bY, \bZ)
-& = \sum^{N}_{i=1}\sum^{D}_{j=1}\sum^{K}_{k=1}\sum^{2}_{\ell = 0}
+& = \sum^{N}_{i=1}\sum^{D}_{j=1}\sum^{K}_{k=1}\sum^{L}_{\ell = 0}
 \bm{1}\{Y_{ij} = \ell, Z_{i} = k\}\Big\{
 \log \Pr(Y_{ij} = \ell | Z_{i} = k, \bm{\mu})
 \Big\} \nonumber\\
@@ -91,7 +86,7 @@ Therefore, the complete log-likelihood is computed by taking the log of this:
 We first take expectations over the latent variable $Z_{i}$,
 \begin{align}
 \E{\mathcal{L}_{\text{comp}}}
-& = \sum^{N}_{i=1}\sum^{D}_{j=1}\sum^{K}_{k=1}\sum^{2}_{\ell = 0}
+& = \sum^{N}_{i=1}\sum^{D}_{j=1}\sum^{K}_{k=1}\sum^{L}_{\ell = 0}
 \bm{1}\{Y_{ij} = \ell\} \E{\bm{1}\{Z_{i} = k\}}\Big\{
 \underbrace{\log \Pr(Y_{ij} = \ell | Z_{i} = k, \bm{\mu})}_{\equiv \log\bm{\mu}_{kj\ell}}
 \Big\} \nonumber\\
@@ -105,7 +100,7 @@ We first take expectations over the latent variable $Z_{i}$,
 Then the E-step can be the normalized version of the posterior probability marginalized by the mixing proportion,
 
 \begin{align}
-\widehat{\zeta}_{ij} \propto \bth_k\prod^D_{j = 1}\underbrace{\prod^{2}_{\ell = 0}\left(\bmu_{kj,\ell}\right)^{\ind{Y_{ij} = \ell}}}_{\bmu_{kj, Y_{ij}}}
+\widehat{\zeta}_{ij} \propto \bth_k\prod^D_{j = 1}\underbrace{\prod^{L}_{\ell = 0}\left(\bmu_{kj,\ell}\right)^{\ind{Y_{ij} = \ell}}}_{\bmu_{kj, Y_{ij}}}
 \end{align}
 
 The M-step is derived by taking the derivatives of \(\E{\mathcal{L}_{\text{comp}}}\) with respect to the model parameters \(\bmu\) and \(\bth\). This leads to a MLE-like M-step
