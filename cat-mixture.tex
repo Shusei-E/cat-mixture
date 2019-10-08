@@ -171,6 +171,24 @@ So the log-likelihood is
 \end{align}
 
 
+\section{Modeling Uncontested Races} 
+
+A majority of elections for state and local offices are uncontested, which means that a voter technically votes in a choice but does not have the option to run for one of the candidates. These choices are qualitatively different from contested races in their data generating process. 
+
+Consider the trichotomous outcome \(L = 2\) where \(Y_{ij} = 0\) indicates abstention, \(Y_{ij} = 1\) indicates ticket splitting (appearing like they are voting for their less preferred party as expressed in the top of the ticket) and \(Y_{ij} = 2\) indicates co-partisan voting.  
+
+Voters are still endowed by types \(k \in \{1,..., K\}\), but they now they are also part of another, precisely observed grouping for each office \(M_{ij} \in \{1, 2, 3\}\) which indicates one of these cases. Let \(M_{ij} = 3\) denote the contested case, so the voter has three options. Let \(M_{ij} = 2\) denote the case when only the preferred party candidate is in the race, and let \(M_{ij} = 1\) denote the case when only the opposed party candidate is in the race. 
+
+To express the choice probability for option \(\ell\) for office \(j\) among voters of type \(k\), let us introduce another parameter \(\bps\) which represents the intensity of preference for option \(\ell \in \{1, 2\}\) relative to \(\ell = 0\) (abstention). We set the baseline for abstention to be 0, i.e. \(\psi_{jk,(\ell=0)} = 0 ~\forall~ j, k\).  Then the log-likelihood can be expressed by 
+
+\begin{align}
+\mu_{jk\ell} &= \ind{M_{ij}= 1}\frac{\exp{\psi_{kj\ell}}}{\sum_{\ell^\prime \in \{0, 1\}}\exp{\psi_{kj\ell^\prime}}}\nonumber \\
+&\qquad +\ind{M_{ij}= 2}\frac{\exp{\psi_{kj\ell}}}{\sum_{\ell^\prime \in \{0, 2\}}\exp{\psi_{kj\ell^\prime}}}\nonumber \\
+&\qquad\qquad +\ind{M_{ij}= 3}\frac{\exp{\psi_{kj\ell}}}{\sum_{\ell^\prime \in \{0, 1, 2\}}\exp{\psi_{kj\ell^\prime}}}\label{eq:missing}
+\end{align}
+
+
+Because \(\exp(\psi_{jk\ell}) = 1\) for \(\ell = 0\), which exists in all three components, each component is analogous to a simple multinomial logit. In the first two cases, since we consider only two possibilities, it reduces to a simple logit. Also notice that we use the same set of parameters \(\bps_{jk}\) regardless of \(M_{ij}\). This represents the well-known independence of irrelevant alternatives (IIA) assumption in multinomial logit. The choice probabilities when one option is not on the ``menu'' is assumed to follow the same type of decision rule as the ratio between the existing options.  We can therefore think of equation \ref{eq:missing} as representing that the relevant parameter \(\mu\) for each individual takes one of the types depending on the (known) class of menu options, without introducing more parameters into the model.
 
 
 \end{document}
