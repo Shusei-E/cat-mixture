@@ -89,7 +89,7 @@ We first take expectations over the latent variable $Z_{i}$,
 \sum^{N}_{i=1}\sum^{K}_{k=1}\E{\bm{1}\{Z_{i} = k\}}\underbrace{\log \Pr(Z_{i} = k | \bm{\theta})}_{= \log \bm{\theta}_{k}}
 \end{align}
 
- Let's define this unkown quantity as 
+ Let's define this unknown quantity as 
 \[\zeta_{ik} \equiv \E{\ind{Z_i = k}}.\]
 
 Then the E-step can be the normalized version of the posterior probability marginalized by the mixing proportion,
@@ -124,16 +124,15 @@ Then given those type probabilities, update the parameters with the MLE (M-step)
 
 We repeat this until convergence.
 
-\paragraph{Convergence} We evaluate convergence by the observed log likelihood, 
+\paragraph{Evaluating Convergence} We evaluate convergence by the observed log likelihood, 
 
 \begin{align*}
-\mathbf{L}_{\text{obs}} &= \prod^{N}_{i=1}\sum^K_{k=1}\theta_k f_{k}(\bY_{i} | \bmu_{k})\\
-&= \prod^N_{i=1}\sum^{K}_{k=1}\theta_k \prod^{D}_{j=1}\bm{\mu}_{k^\prime j,Y_{ij}}
+\mathbf{L}_{\text{obs}} = \prod^N_{i=1}\sum^{K}_{k=1}\theta_k \prod^{D}_{j=1}\bm{\mu}_{kj,Y_{ij}}
 \end{align*}
 
 So the log-likelihood is
 \begin{align}
-\mathcal{L}_{\text{obs}} &= \sum^{N}_{i=1}\left[\prod^{K}_{k=1}\left\{\log\theta_{k} + \sum^D_{j=1}\sum^L_{\ell=1}\ind{Y_{ij} = \ell}\log(\mu_{kj\ell})\right\}\right]\label{eq:obsloglik}
+\mathcal{L}_{\text{obs}} = \sum^{N}_{i=1}\log \left\{\sum^{K}_{k=1}\theta_k \prod^{D}_{j=1}\bm{\mu}_{kj,Y_{ij}}\right\} \label{eq:obsloglik}
 \end{align}
 
 Calculating eq. (\ref{eq:obsloglik}) is computationally intensive, so a quick way to check convergence is to track the maximum of the change in parameters which are all on the probability scale, i.e. \(\max\left\{|\widehat\theta^{(t + 1)}_{1} - \widehat\theta^{(t)}_{1}|, ..., |\widehat\mu^{(t + 1)}_{K,D} - \widehat\mu^{(t)}_{K,D}|\right\}\)
@@ -160,7 +159,7 @@ And the log-likelihood will also only require looping through the profiles:
 
 So the log-likelihood is
 \begin{align}
-\mathcal{L}_{\text{obs}} &= \sum^{U}_{u=1}\left[n_u\prod^{K}_{k=1}\left\{\log\theta_{k} + \sum^D_{j=1}\sum^L_{\ell=1}\ind{Y_{uj} = \ell}\log(\mu_{kj\ell})\right\}\right]\label{eq:obsloglik}
+\mathcal{L}_{\text{obs}} &= \sum^{U}_{u=1}\log n_u + \sum^{U}_{u=1}\log\left\{\sum^{K}_{k=1}\theta_k \prod^{D}_{j=1}\bm{\mu}_{kj,Y_{ij}}\right\}
 \end{align}
 
 

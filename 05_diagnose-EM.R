@@ -31,12 +31,12 @@ loglik_obs <- function(t, obj = store_iter) {
   for (u in 1:data$U) {
     resp_i <- c()
     for (k in 1:user_K) {
-      resp_i[k] = foreach(j = 1:data$D, .combine = "+") %:%
-        foreach(l = 0:(data$L), .combine = "+") %do% {
-          (data$uy[u, j] == l)*log(mu_t[k, j, (l + 1)])
+      resp_i[k] = foreach(j = 1:data$D, .combine = "*") %:%
+        foreach(l = 0:(data$L), .combine = "*") %do% {
+          log(mu_t[k, j, (l + 1)])^(data$uy[u, j] == l)
         }
     }
-    loglik_obs[u] <- data$n_u[u] * prod(log(theta_t) + resp_i[1:user_K])
+    loglik_obs[u] <- data$n_u[u] * log(theta_t %*% resp_i)
   }
   sum(loglik_obs)
 }
