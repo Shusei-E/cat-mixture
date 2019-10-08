@@ -12,8 +12,10 @@ ch_split <- ch_votes %>%
   rename_at(vars(matches("(USH|HOU|CCD|JPR)_party")), ~str_replace(.x, "_party", "_split")) %>%
   mutate_at(
     vars(matches("_split")),
-    ~case_when(GOV_party == .x & GOV_party %in% c(-1, 1) ~ 0,
-               GOV_party != .x & GOV_party %in% c(-1, 1)  & .x %in% c(-1, 1) ~ 1,
+    ~case_when(GOV_party == .x & GOV_party %in% c(-1, 1) & .x %in% c(-1, 1) ~ 2, # straight
+               GOV_party != .x & GOV_party %in% c(-1, 1)  & .x %in% c(-1, 1) ~ 1, # split
+               .x == 0 & GOV_party %in% c(-1, 1) ~ 0, # abstain
+               is.na(GOV_party) | GOV_party == 0 ~ NA_real_,
                is.na(.x) ~ NA_real_,
                TRUE ~ 0)
     ) %>%
