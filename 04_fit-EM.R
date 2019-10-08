@@ -21,28 +21,23 @@ user_K <- 3
 init_theta = rep(1/user_K, user_K)
 # init_theta = params$theta # chat by giving it  correct thetas?
 
-# initialize mu {K x D x L} -- currently only supports L = 2
+# initialize mu {K x D x L}x
 init_Z_table <- rmultinom(data$N, size = 1, prob = init_theta)
 init_Z <- map_dbl(1:data$N, ~which(init_Z_table[, .x] == 1))
-init_muhat <- flatten_dbl(map(1:user_K, ~colMeans(data$y[init_Z == .x, ])))
 
-init_mu_pr = matrix(init_muhat,
-                    nrow = user_K,
-                    byrow = TRUE)
-
+# data$L
 mu <- init_mu <- array(NA, dim = c(user_K, data$D, data$L + 1))
+for (l in 0:data$L) {
+  mu_vector <- flatten_dbl(map(1:user_K, ~colMeans(data$y[init_Z == .x, ] == l)))
+  init_mu[, , l + 1] = matrix(mu_vector, nrow = user_K, byrow = TRUE)
+}
 
-# y = 1 corresponds to second array
-init_mu[, , data$L + 1] = init_mu_pr
-# y = 0 corresponds to first matrix
-init_mu[, , data$L] = 1 - init_mu_pr
 
 # container for theta
 theta = rep(NA, user_K)
 
 # container for zeta {N x K}
 zeta_hat = matrix(NA, nrow = data$U, ncol = user_K)
-
 
 
 
