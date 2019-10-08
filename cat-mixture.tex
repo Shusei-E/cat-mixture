@@ -58,17 +58,25 @@ between variables.\footnote{That dependency can be expressed as \(\mathds{E}(\by
 \(\cov({\by}) = \sum_{k} \theta_{k} (\mathbf{\Sigma}_k \bmu_k\bmu_{k}^{\top}) - \mathds{E}(\by)\mathds{E}(\by)^\top\), where \(\Sigma_k = \text{diag}(\mu_{jk}(1 - \mu_{jk}))\).}
 
 
-\section{EM}
+\section{Clustering as an Unobserved Variable Problem: EM}
 
 This mixture model lends itself to clustering analysis such as \(K\)-means. Although we can estimate this model in a Bayesian fashion by setting a prior for \(\bth\) and \(\bmu\), the \textsf{Stan} program cannot reliably estimate clustering models like this one by MCMC because of label-switching and multimodality. 
 
 Because the model is simple enough, we can derive an algorithm to obtain the global solution for the parameters.\footnote{Thanks to Soichiro Yamauchi for deriving this algorithm in the original iteration.} An EM implementation makes it possible to handle extensions, such as systematic missing data, multinomial outcomes, and covariates. 
 
-\paragraph{Complete Likelihood} If we knew the cluster assignment, we would be able to write the complete likelihood (\(\mathbf{L}_{\text{comp}}\)) and the complete log-likelihood (\(\mathcal{L}_{\text{comp}}\)),
+\paragraph{Complete Likelihood} If we knew the cluster assignment, we would be able to write the complete log-likelihood (\(\mathcal{L}_{\text{comp}}\)). First start with the joint probability of the outcome data and the cluster assignment:
+
+\begin{align}
+\Pr(\bY, \bZ \mid \bmu, \bth) &= \Pr(\bY \mid \bZ, \bmu, \bth)\Pr(\bZ \mid \bth)\nonumber\\
+&= \prod^{N}_{i=1}\prod^{D}_{j=1}\Pr(Y_{ij} \mid \bZ, \bmu) \prod^N_{i=1}\Pr(Z_i \mid \bth)\nonumber\\
+&= \prod^{N}_{i=1}\prod^{D}_{j=1}\prod^{K}_{k=1}\left\{\prod^{L}_{\ell=0}\pr{Y_{ij} = \ell | Z_i = k}\right\}^{\ind{Z_i=k}} \prod^N_{i=1}\prod^K_{k=1}\theta_{k}^{\ind{Z_i = k}}\nonumber \\
+&= \prod^{N}_{i=1}\prod^{D}_{j=1}\prod^{K}_{k=1}\prod^{L}_{\ell=0}\pr{Y_{ij} = \ell \mid Z_{i} = k, \bmu}^{\ind{Y_{ij} = \ell, Z_i = k}} \prod^N_{i=1}\prod^K_{k=1}\pr{Z_i = {k} \mid \bth}^{\ind{Z_i = k}}\nonumber
+\end{align}
+
+Therefore, the complete log-likelihood is computed by taking the log of this:
 
 
 \begin{align}
-\mathbf{L}_{\text{comp}}(\bmu, \bth | \bY, \bZ) =& \prod^{N}_{i=1}\prod^{D}_{j=1} \prod^{K}_{k = 1}\Pr(Z_i = k | \bth)  \prod^L_{\ell = 0}\Pr(Y_{ij}=  1 | Z_i = k, \bmu)^{\bm{1}(Y_{ij} = \ell \mid Z_i = k)}\nonumber\\
 \mathcal{L}_{\text{comp}}(\bmu, \bth|\bY, \bZ)
 & = \sum^{N}_{i=1}\sum^{D}_{j=1}\sum^{K}_{k=1}\sum^{2}_{\ell = 0}
 \bm{1}\{Y_{ij} = \ell, Z_{i} = k\}\Big\{

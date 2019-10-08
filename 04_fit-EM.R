@@ -52,7 +52,7 @@ zeta_hat = matrix(NA, nrow = data$U, ncol = user_K)
 iter = 1
 store_iter = list()
 
-while (iter <= 10) {
+while (iter <= 100) {
   if (iter == 1) {
     theta = init_theta
     mu    = init_mu

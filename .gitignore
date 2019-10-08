@@ -7,6 +7,7 @@ sim-iterations.Rds
 cluster_votes.pdf
 cluster_votes.tex
 data/mcmc
+data/EM
 *.html
 
 # R
