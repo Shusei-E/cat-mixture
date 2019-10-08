@@ -1,5 +1,12 @@
 #' Compute EM
-cat_mixture <- function(data, user_K = 3, n_iter = 100) {
+cat_mixture <- function(data, user_K = 3, n_iter = 100, fast = TRUE) {
+
+  # Unique profile and speed up? ----
+  if (!fast) {
+    data$U <- data$N
+    data$n_u <- rep(1, data$N)
+    data$uy <- data$y
+  }
 
   # Setup -------
   user_K <- 3
