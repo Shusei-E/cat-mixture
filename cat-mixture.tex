@@ -22,7 +22,9 @@
 Index individuals by \(i \in \{1, ..., N\}\) and the universe of races
 excluding the top of the ticket as \(j \in \{1, ..., D\}\). The data we
 observe is a length-\(D\) vector of votes \(\bY_i\). \(Y_{ij}\) is a
-discrete response value, \(Y_{ij} \in \{0, ..., L\}\). For now, let's use \(L = 1\) so that each vote \(y_{ij}\) be a binary variable for splitting their ticket or not. \(Y_{ij} = 1\) would mean voter \(i\) splitting their ticket in some office \(j\), with reference to a top of the ticket office like the President or Governor.
+discrete response value, \(Y_{ij} \in \{0, ..., L\}\). 
+
+In the simplest case \(L = 1\), we code each vote \(y_{ij}\) an indicator for splitting their ticket or not. \(Y_{ij} = 1\) would mean voter \(i\) splitting their ticket in some office \(j\), with reference to a top of the ticket office like the President or Governor. When \(L = 2\), we can consider three outcomes: abstention \(Y_{ij} = 0\), split \(Y_{ij} = 0\), or straight \(Y_{ij} = 2\).
 
 
 \paragraph{Parameters}
@@ -43,10 +45,10 @@ In other words, for each individual (who is  type \(k\)), their observed vector 
 \pr{\bY_{i} \mid Z_{i} = k, \bth} = \prod^{D}_{j = 1} \text{Cat}(Y_{ij} | \bmu_k) = \prod^{D}_{j = 1}\prod^{L}_{\ell=0} \mu_{jk\ell}^{\ind{Y_{ij} = \ell}}
 \end{align}
 
-In our binary case, the Categorical reduces to a Bernoulli:
+The loop over \(\ell\) simply represents the categorical distribution. In the binary case, the Categorical reduces to a Bernoulli:
 
 \begin{align}
-\pr{\bY_{i} \mid Z_{i} = k, \bth} = \prod^{D}_{j=1}\mu_{jk}^{Y_{ij}}(1 - \mu_{jk})^{1- Y_{ij}}
+\pr{\bY_{i} \mid Z_{i} = k, \bth} = \prod^{D}_{j=1}\mu_{jk}^{Y_{ij}}(1 - \mu_{jk})^{1- Y_{ij}}\nonumber
 \end{align}
 
 
@@ -177,7 +179,7 @@ A majority of elections for state and local offices are uncontested, which means
 
 Consider the trichotomous outcome \(L = 2\) where \(Y_{ij} = 0\) indicates abstention, \(Y_{ij} = 1\) indicates ticket splitting (appearing like they are voting for their less preferred party as expressed in the top of the ticket) and \(Y_{ij} = 2\) indicates co-partisan voting.  
 
-Voters are still endowed by types \(k \in \{1,..., K\}\), but they now they are also part of another, precisely observed grouping for each office \(M_{ij} \in \{1, 2, 3\}\) which indicates one of these cases. Let \(M_{ij} = 3\) denote the contested case, so the voter has three options. Let \(M_{ij} = 2\) denote the case when only the preferred party candidate is in the race, and let \(M_{ij} = 1\) denote the case when only the opposed party candidate is in the race. 
+Voters for a given office now fall into one of these three categories, denoted by \(M_{ij} \in \{1, 2, 3\}\). Let \(M_{ij} = 3\) denote the contested case, so the voter has three options. Let \(M_{ij} = 2\) denote the case when only the preferred party candidate is in the race, so the voter has options \(Y_{ij} \in \{0, 2\}\). Finally let \(M_{ij} = 1\) denote the case when only the opposed party candidate is in the race, so the voter only has the option to abstain or ``reluctantly''  (as it might seem) vote for the less favored option by splitting: \(Y_{i} \in \{0, 1\}\).
 
 To express the choice probability for option \(\ell\) for office \(j\) among voters of type \(k\), let us introduce another parameter \(\bps\) which represents the intensity of preference for option \(\ell \in \{1, 2\}\) relative to \(\ell = 0\) (abstention). We set the baseline for abstention to be 0, i.e. \(\psi_{jk,(\ell=0)} = 0 ~\forall~ j, k\).  Then the log-likelihood can be expressed by 
 
@@ -188,7 +190,7 @@ To express the choice probability for option \(\ell\) for office \(j\) among vot
 \end{align}
 
 
-Because \(\exp(\psi_{jk\ell}) = 1\) for \(\ell = 0\), which exists in all three components, each component is analogous to a simple multinomial logit. In the first two cases, since we consider only two possibilities, it reduces to a simple logit. Also notice that we use the same set of parameters \(\bps_{jk}\) regardless of \(M_{ij}\). This represents the well-known independence of irrelevant alternatives (IIA) assumption in multinomial logit. The choice probabilities when one option is not on the ``menu'' is assumed to follow the same type of decision rule as the ratio between the existing options.  We can therefore think of equation \ref{eq:missing} as representing that the relevant parameter \(\mu\) for each individual takes one of the types depending on the (known) class of menu options, without introducing more parameters into the model.
+\textbf{Remark}: Because \(\exp(\psi_{jk\ell}) = 1\) for \(\ell = 0\), which exists in all three components, each component is analogous to a simple multinomial logit. In the first two cases, since we consider only two possibilities, it reduces to a simple intercept-only logit. Also notice that we use the same set of parameters \(\bps_{jk}\) regardless of \(M_{ij}\). This represents the well-known independence of irrelevant alternatives (IIA) assumption in multinomial logit. The choice probabilities when one option is not on the ``menu'' is assumed to follow the same type of decision rule as the ratio between the existing options.  We can therefore think of equation \ref{eq:missing} as representing that the relevant parameter \(\mu\) for each individual takes one of the types depending on the (known) class of menu options, without introducing more parameters into the model.
 
 
 \end{document}
