@@ -100,7 +100,7 @@ We first take expectations over the latent variable $Z_{i}$,
 Then the E-step can be the normalized version of the posterior probability marginalized by the mixing proportion,
 
 \begin{align}
-\widehat{\zeta}_{ij} \propto \bth_k\prod^D_{j = 1}\underbrace{\prod^{L}_{\ell = 0}\left(\bmu_{kj,\ell}\right)^{\ind{Y_{ij} = \ell}}}_{\bmu_{kj, Y_{ij}}}
+\widehat{\zeta}_{ij} \propto \bth_k\prod^D_{j = 1}\underbrace{\prod^{L}_{\ell = 0}\left(\bmu_{kj\ell}\right)^{\ind{Y_{ij} = \ell}}}_{\bmu_{kj, Y_{ij}}}
 \end{align}
 
 The M-step is derived by taking the derivatives of \(\E{\mathcal{L}_{\text{comp}}}\) with respect to the model parameters \(\bmu\) and \(\bth\). This leads to a MLE-like M-step
@@ -170,23 +170,74 @@ So the log-likelihood is
 
 \section{Modeling Uncontested Races} 
 
-A majority of elections for state and local offices are uncontested, which means that a voter technically votes in a choice but does not have the option to run for one of the candidates. These choices are qualitatively different from contested races in their data generating process. 
+A majority of elections for state and local offices are uncontested, which means that a voter technically votes in a choice but does not have the option to vote for one of the candidates. These qualitatively-different settings for another layer of modeling. 
 
-Consider the trichotomous outcome \(L = 2\) where \(Y_{ij} = 0\) indicates abstention, \(Y_{ij} = 1\) indicates ticket splitting (appearing like they are voting for their less preferred party as expressed in the top of the ticket) and \(Y_{ij} = 2\) indicates co-partisan voting.  
+This setup uses the trichotomous outcome \(\ell \in \{0, 1,  2\}\) where \(Y_{ij} = 0\) indicates \emph{abstention}, \(Y_{ij} = 1\) indicates ticket \emph{splitting} (appearing like they are voting for their less preferred party as expressed in the top of the ticket) and \(Y_{ij} = 2\) indicates \emph{straight} (co-party) voting.  
 
-Voters for a given office now fall into one of these three categories, denoted by \(M_{ij} \in \{1, 2, 3\}\). Let \(M_{ij} = 3\) denote the contested case, so the voter has three options. Let \(M_{ij} = 2\) denote the case when only the preferred party candidate is in the race, so the voter has options \(Y_{ij} \in \{0, 2\}\). Finally let \(M_{ij} = 1\) denote the case when only the opposed party candidate is in the race, so the voter only has the option to abstain or ``reluctantly''  (as it might seem) vote for the less favored option by splitting: \(Y_{i} \in \{0, 1\}\).
+\paragraph{Categories of uncontestedness} Now we introduce a new layer: voter \(i\) for a given office \(j\) is in one of three settings, denoted by \(M_{ij} \in \{1, 2, 3\}\). Unlike the cluster \(Z_i\), that status is exactly observed in the data. Denote \(M_{ij} = 3\) to mean vote \(j\) for voter \(i\) falls in the \emph{contested} case, so the voter has all three options on the menu. Denote \(M_{ij} = 2\) as the case when only the \emph{preferred party's} candidate is in the contest, so the voter only has options \(Y_{ij} \in \{0, 2\}\). Finally denote \(M_{ij} = 1\) as the case when only the \emph{opposed party's} candidate is in the contest, so the voter only has the option to abstain or ``reluctantly'' vote for the less favored option by splitting: \(Y_{i} \in \{0, 1\}\).
 
-To express the choice probability for option \(\ell\) for office \(j\) among voters of type \(k\), let us introduce another parameter \(\bps\) which represents the intensity of preference for option \(\ell \in \{1, 2\}\) relative to \(\ell = 0\) (abstention). We set the baseline for abstention to be 0, i.e. \(\psi_{jk,(\ell=0)} = 0 ~\forall~ j, k\).  Then the log-likelihood can be expressed by 
+\paragraph{Moving from a Multinomial model to a logit model} To express the choice probability for option \(\ell\) for office \(j\) among voters of type \(k\), let us introduce another parameter \(\bps\) which represents the intensity of preference for option \(\ell \in \{1, 2\}\) relative to \(\ell = 0\) (abstention). We set the baseline for abstention to be 0, i.e. \(\psi_{jk,(\ell=0)} = 0 ~\forall~ j, k\).  Then the log-likelihood can be expressed in three parts. Formally, let \(V_{jk}(Y_{ij} = \ell)\) quantify the utility a voter gets for voting for voting for option \(\ell\).
+ 
+\begin{align*}
+\begin{cases}
+\text{For }\ell = 0: & \psi_{jk0} \stackrel{\text{set}}{=} 0\\
+\text{For }\ell \in \{1, 2\}: & \psi_{jk\ell} \equiv V_{jk}(Y_{ij} = \ell) - \psi_{jk\ell}\\
+\end{cases}
+\end{align*}
+
+Of course, how much utility translates into vote choice is an empirical question, but for our purposes these are latent quantity anyways, so we will simply assume that \(\bps\) is an intercept which exclusively shapes the category.
+
+
+\paragraph{Parameterization} To show the essence of this modeling choice, the below shows the case when there are no clusters \(K = 1\) and no latent heterogeneity across individuals for simplicity. Then the indices \(i, k\) drop and we get
 
 \begin{align}
-\mu_{jk\ell} &= \ind{M_{ij}= 1}\frac{\exp{\psi_{kj\ell}}}{\sum_{\ell^\prime \in \{0, 1\}}\exp{\psi_{kj\ell^\prime}}}\nonumber \\
-&\qquad +\ind{M_{ij}= 2}\frac{\exp{\psi_{kj\ell}}}{\sum_{\ell^\prime \in \{0, 2\}}\exp{\psi_{kj\ell^\prime}}}\nonumber \\
-&\qquad\qquad +\ind{M_{ij}= 3}\frac{\exp{\psi_{kj\ell}}}{\sum_{\ell^\prime \in \{0, 1, 2\}}\exp{\psi_{kj\ell^\prime}}}\label{eq:missing}
+\mu_{j\ell} &= \ind{M_{j}= 1}\frac{\exp{\psi_{j\ell}}}{\sum_{\ell^\prime \in \{0, 1\}}\exp{\psi_{j\ell^\prime}}}\nonumber \\
+&\qquad +\ind{M_{j}= 2}\frac{\exp{\psi_{j\ell}}}{\sum_{\ell^\prime \in \{0, 2\}}\exp{\psi_{j\ell^\prime}}}\nonumber \\
+&\qquad\qquad +\ind{M_{j}= 3}\frac{\exp{\psi_{j\ell}}}{\sum_{\ell^\prime \in \{0, 1, 2\}}\exp{\psi_{j\ell^\prime}}}\label{eq:missing}
+\end{align}
+
+Now we add the clustering and individual indices back in for the real data, effectively another layer to account for the fact that individuals are both of a type (\(Z_i\)) and each separate office is also of a missingness type \(M_{ij}\):
+
+
+\begin{align}
+\mu_{jk\ell} &= \sum^K_{k=1}\ind{Z_i = k, M_{ij}= 1}\frac{\exp{\psi_{kj\ell}}}{\sum_{\ell^\prime \in \{0, 1\}}\exp{\psi_{kj\ell^\prime}}}\nonumber \\
+&\qquad +\sum^K_{k=1}\ind{Z_i = k, M_{ij}= 2}\frac{\exp{\psi_{kj\ell}}}{\sum_{\ell^\prime \in \{0, 2\}}\exp{\psi_{kj\ell^\prime}}}\nonumber \\
+&\qquad\qquad +\sum^K_{k=1}\ind{Z_i = k, M_{ij}= 3}\frac{\exp{\psi_{kj\ell}}}{\sum_{\ell^\prime \in \{0, 1, 2\}}\exp{\psi_{kj\ell^\prime}}}\label{eq:missing}
 \end{align}
 
 
-\textbf{Remark}: Because \(\exp(\psi_{jk\ell}) = 1\) for \(\ell = 0\), which exists in all three components, each component is analogous to a simple multinomial logit. In the first two cases, since we consider only two possibilities, it reduces to a simple intercept-only logit. Also notice that we use the same set of parameters \(\bps_{jk}\) regardless of \(M_{ij}\). This represents the well-known independence of irrelevant alternatives (IIA) assumption in multinomial logit. The choice probabilities when one option is not on the ``menu'' is assumed to follow the same type of decision rule as the ratio between the existing options.  We can therefore think of equation \ref{eq:missing} as representing that the relevant parameter \(\mu\) for each individual takes one of the types depending on the (known) class of menu options, without introducing more parameters into the model.
+\paragraph{Analog to Multinomial Logit} Because \(\exp(\psi_{jk\ell}) = 1\) for \(\ell = 0\), which exists in all three components, each component is analogous to a simple multinomial logit. In the first two cases, since we consider only two possibilities, it reduces to a simple intercept-only logit. Also notice that we use the same set of parameters \(\bps_{jk}\) regardless of \(M_{ij}\). This represents the well-known independence of irrelevant alternatives (IIA) assumption in multinomial logit. The choice probabilities when one option is not on the ``menu'' is assumed to follow the same type of decision rule as the ratio between the existing options.  We can therefore think of equation \ref{eq:missing} as representing that the relevant parameter \(\mu\) for each individual takes one of the types depending on the (known) class of menu options, without introducing more parameters into the model.
+
+\paragraph{EM Estimation} We can use this new representation of the parameter \(\mu\) in the EM algorithm. The three components in equation \ref{eq:missing} can be cast as a multinomial logit. R packages of multinomial logit typically presume IIA if an outcome value is missing and implicitly do the kind of three-way subsetting as in eq. \ref{eq:missing}. The required data would be of the ``long'' form
+
+\begin{table}[!h]
+\centering
+\singlespacing
+\begin{tabularx}{0.45\textwidth}{ccccc}
+\toprule
+Voter &  Office & \(M_i\) & Option $\ell$ &  \(Y_{ij}\)\\\midrule
+\(i = 1\) & \(j = 1\) & 3 & 0 & \texttt{FALSE}\\
+\(i = 1\) & \(j = 1\) & 3 & 1 & \texttt{FALSE}\\
+\(i = 1\) & \(j = 1\) & 3 & 2 & \texttt{TRUE}\\\addlinespace
+\(i = 1\) & \(j = 2\) & 2 & 0 & \texttt{FALSE}\\
+\(i = 1\) & \(j = 2\) & 2 & 1 & \textcolor{crimson}{\texttt{NA}}\\
+\(i = 1\) & \(j = 2\) & 2 & 2 & \texttt{TRUE}\\\addlinespace
+\(i = 1\) & \(j = 3\) & 1 & 0 & \texttt{FALSE}\\
+\(i = 1\) & \(j = 3\) & 1 & 1 & \texttt{TRUE}\\
+\(i = 1\) & \(j = 3\) & 1 & 2 & \textcolor{crimson}{\texttt{NA}}\\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+Here again, we've set aside the clustered nature. With that simplification, this data would allow for the simple syntax \texttt{m <- mlogit(Y $\sim$ 1, data = votes)}.  
+
+We will estimate this regression separately for each \(k \in \{1, ..., K\}\), using the estimates of \(\widehat\zeta_{ik}\), which represents the posterior probability of voter \(i\) being in cluster \(k\), as the weights of the logit. 
+
+We then read off the two coefficients (relative to baseline), which will determine the value for \(\mu_{jk\ell}\). 
+
+
 
 
 \end{document}
+
 
