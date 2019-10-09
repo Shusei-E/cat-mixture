@@ -1,3 +1,7 @@
+library(tidyverse)
+library(foreach)
+library(glue)
+
 #' Compute EM
 cat_mixture <- function(data, user_K = 3, n_iter = 100, fast = TRUE) {
 
