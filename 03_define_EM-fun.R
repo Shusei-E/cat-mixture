@@ -13,7 +13,7 @@ library(glue)
 #' @param obj the EM object with all iterations
 #' @return the log likelihood
 #'
-loglik_obs <- function(t, obj = store_iter) {
+loglik_obs <- function(t, obj, data) {
   loglik_obs <- c()
 
   theta_t <- obj[[t]]$theta
@@ -26,7 +26,7 @@ loglik_obs <- function(t, obj = store_iter) {
     for (k in 1:user_K) {
       resp_i[k] = foreach(j = 1:data$D, .combine = "*") %:%
         foreach(l = 0:(data$L), .combine = "*") %do% {
-          log(mu_t[k, j, (l + 1)])^(data$uy[u, j] == l)
+          (mu_t[k, j, (l + 1)])^(data$uy[u, j] == l)
         }
     }
     loglik_obs[u] <- data$n_u[u] * log(theta_t %*% resp_i)
@@ -41,15 +41,20 @@ loglik_obs <- function(t, obj = store_iter) {
 #' @param obj the EM object with all iterations
 #'
 #' @return A tibble
-vector_params <- function(t, loglik = FALSE, obj = store_iter) {
+vector_params <- function(t, loglik = FALSE, obj, data) {
   theta_vector <- obj[[t]]$theta
-  mu_vector <- obj[[t]]$mu[, , (data$L + 1)]
-  df_i <- tibble(param_id = 1:(length(theta_vector) + length(mu_vector)),
-                 type = c(rep("theta", length(theta_vector)),
-                          rep("mu",    length(mu_vector))),
+  mu_vector    <- obj[[t]]$mu[, , (1:(data$L + 1))]
+
+  user_K <- length(theta_vector)
+  theta_names <- str_c("theta_", 1:user_K)
+  mu_names    <- str_c(str_c(str_c("mu_", 1:user_K, "_"),
+                       rep(1:data$D, each = user_K), "_"),
+                       rep(0:data$L, each = user_K*data$D))
+
+  df_i <- tibble(param_id = c(theta_names, mu_names),
                  values = c(theta_vector, mu_vector)
   )
-  if (loglik) df_i$loglik_obs <- loglik_obs(t)
+  if (loglik) df_i$loglik_obs <- loglik_obs(t, obj, data)
   return(df_i)
 }
 
@@ -158,13 +163,13 @@ cat_mixture <- function(data, user_K = 3, n_iter = 100, fast = TRUE) {
 # Summarize ----
 
 # stack all pre-post comparisons
-summ_params <- function(store_iter, calc_loglik = TRUE) {
+summ_params <- function(store_iter, data, calc_loglik = TRUE) {
   foreach(t = 2:length(store_iter), .combine = "bind_rows") %do% {
-    params_t <- vector_params(t, loglik = calc_loglik)
-    params_tminus1 <- vector_params(t - 1, loglik = FALSE)
+    params_t       <- vector_params(t, loglik = calc_loglik, store_iter, data)
+    params_tminus1 <- vector_params(t - 1, loglik = FALSE, store_iter, data)
 
     left_join(params_tminus1, params_t,
-              by = c("param_id", "type"),
+              by = c("param_id"),
               suffix = c("_pre", "_now")) %>%
       mutate(iter = t) %>%
       mutate(diff = abs(values_now - values_pre))
