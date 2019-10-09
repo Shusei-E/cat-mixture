@@ -40,13 +40,13 @@ Set \(\mu_{k, j} \in [0, 1]\) be the parameter that governs the outcome of each 
 
 In other words, for each individual (who is  type \(k\)), their observed vector \(\bY_{i}\) is governed by a length-\(D\) parameter \(\bmu_{k}\). Therefore, we can express the joint density as follows. 
 \begin{align}
-\pr{\bY_{i} \mid Z_{i} = k, \bth} = \prod^{D}_{j = 1} \text{Cat}(Y_{ij} | \bmu_k) = \prod^{D}_{j = 1}\prod^{L}_{\ell=0} \mu_{jk\ell}^{\ind{Y_{ij} = \ell}}
+\pr{\bY_{i} \mid Z_{i} = k, \bth} = \prod^{D}_{j = 1} \text{Cat}(Y_{ij} | \bmu_k) = \prod^{D}_{j = 1}\prod^{L}_{\ell=0} \mu_{kj\ell}^{\ind{Y_{ij} = \ell}}
 \end{align}
 
 The loop over \(\ell\) simply represents the categorical distribution. In the binary case, the Categorical reduces to a Bernoulli:
 
 \begin{align}
-\pr{\bY_{i} \mid Z_{i} = k, \bth} = \prod^{D}_{j=1}\mu_{jk}^{Y_{ij}}(1 - \mu_{jk})^{1- Y_{ij}}\nonumber
+\pr{\bY_{i} \mid Z_{i} = k, \bth} = \prod^{D}_{j=1}\mu_{kj}^{Y_{ij}}(1 - \mu_{kj})^{1- Y_{ij}}\nonumber
 \end{align}
 
 
@@ -55,7 +55,7 @@ The loop over \(\ell\) simply represents the categorical distribution. In the bi
 The benefit of this modeling exercise over that from a naive sample of
 \(N \times D\) Bernoullis is that we have captured the correlations
 between variables.\footnote{That dependency can be expressed as \(\mathds{E}(\by) = \sum_{k = 1}^{K} \theta_{k} \bmu_{k}\) and 
-\(\cov({\by}) = \sum_{k} \theta_{k} (\mathbf{\Sigma}_k \bmu_k\bmu_{k}^{\top}) - \mathds{E}(\by)\mathds{E}(\by)^\top\), where \(\Sigma_k = \text{diag}(\mu_{jk}(1 - \mu_{jk}))\).}
+\(\cov({\by}) = \sum_{k} \theta_{k} (\mathbf{\Sigma}_k \bmu_k\bmu_{k}^{\top}) - \mathds{E}(\by)\mathds{E}(\by)^\top\), where \(\Sigma_k = \text{diag}(\mu_{kj}(1 - \mu_{kj}))\).}
 
 
 \section{Clustering as an Unobserved Variable Problem: EM}
@@ -107,11 +107,11 @@ The M-step is derived by taking the derivatives of \(\E{\mathcal{L}_{\text{comp}
 
 \begin{align}
 \widehat{\theta}_{k} &= \frac{1}{N}\sum^N_{i = 1}\zeta_{ik}\\
-\widehat{\mu}_{jk\ell} &= \frac{\sum^N_{i=1}\ind{Y_{ij} = \ell}\zeta_{ik}}{\sum^{N}_{i=1}\zeta_{ik}}
+\widehat{\mu}_{kj\ell} &= \frac{\sum^N_{i=1}\ind{Y_{ij} = \ell}\zeta_{ik}}{\sum^{N}_{i=1}\zeta_{ik}}
 \end{align}
 
 
-\paragraph{EM Implementation} We first need to set initial values for \(\bmu\) and \(\bth\). I do this by letting \(\bth^{(0)} = \left(\frac{1}{K},...\frac{1}{K}\right)\), randomly assigning an initial cluster assignment \(Z_i^\prime \sim \text{Cat}(\bth^{(0)})\), and setting the initial \(\bmu\) by the sample means of the data within those initial assignments, \(\mu_{jk}^{(0)} = \frac{\sum_{i=1}^{N}\ind{Y_{ij} = 1}\ind{Z_{i}^{\prime} = k}}{\sum_{i=1}^{N}\ind{Z_{i}^{\prime} = k}}.\) 
+\paragraph{EM Implementation} We first need to set initial values for \(\bmu\) and \(\bth\). I do this by letting \(\bth^{(0)} = \left(\frac{1}{K},...\frac{1}{K}\right)\), randomly assigning an initial cluster assignment \(Z_i^\prime \sim \text{Cat}(\bth^{(0)})\), and setting the initial \(\bmu\) by the sample means of the data within those initial assignments, \(\mu_{kj}^{(0)} = \frac{\sum_{i=1}^{N}\ind{Y_{ij} = 1}\ind{Z_{i}^{\prime} = k}}{\sum_{i=1}^{N}\ind{Z_{i}^{\prime} = k}}.\) 
 
 Then we iterate as follows. For each voter \(i\), compute the probability that they belong in cluster \(k\) (E-step):
 
@@ -120,14 +120,14 @@ Then we iterate as follows. For each voter \(i\), compute the probability that t
 {\sum^{K}_{k^\prime=1}\bm{\theta}_{k^\prime}\prod^{D}_{j=1}\bm{\mu}_{k^\prime j,Y_{ij}}}
 \end{align}
 
-Then given those type probabilities, update the parameters with the MLE (M-step)
-
+Then given those type probabilities, in the M-step. We can show from a Lagrangian maximization problem that the new parameters are MLEs. For updating \(\theta_k\), we take the simple average of \(\widehat\zeta_{ik}\) across all \(i\). For updating \(\widehat\mu_{kj\ell}\), for each \(k\) and \(\ell\) we take the sample proportion of the occurrence of \(Y_{ij} = \ell\), but weighted by \(\widehat\zeta_{ik}\):
 \begin{align}
 \text{for each \(k\), update: }~~~  \widehat{\theta}_{k} &\leftarrow \frac{1}{N}\sum^N_{i = 1}\widehat{\zeta}_{ik} \\
-\text{for each \(k, j, \ell\), update: }~~~ \widehat{\mu}_{jk\ell} &\leftarrow\frac{\sum^N_{i=1}\ind{Y_{ij} = \ell}\widehat{\zeta}_{ik}}{\sum^{N}_{i=1}\widehat{\zeta}_{ik}}
+\text{for each \(k, j, \ell\), update: }~~~ \widehat{\mu}_{kj\ell} &\leftarrow\frac{\sum^N_{i=1}\ind{Y_{ij} = \ell}\widehat{\zeta}_{ik}}{\sum^{N}_{i=1}\widehat{\zeta}_{ik}}
 \end{align}
 
-We repeat this until convergence.
+
+We repeat this until convergence. 
 
 \paragraph{Evaluating Convergence} We evaluate convergence by the observed log likelihood, 
 
@@ -157,7 +157,7 @@ Then given those type probabilities, update with
 
 \begin{align}
 \text{for each \(k\), update: }~~~   \widehat{\theta}_{k} &\leftarrow \frac{1}{N}\sum^U_{u = 1}n_{u}\widehat{\zeta}_{uk}\\
-\text{for each \(k, j, \ell\), update: }~~~   \widehat{\mu}_{jk\ell} &\leftarrow\frac{\sum^U_{u=1}n_{u}\ind{Y_{uj} = \ell}\widehat{\zeta}_{uk}}{\sum^{U}_{u=1}n_{u}\widehat{\zeta}_{uk}}
+\text{for each \(k, j, \ell\), update: }~~~   \widehat{\mu}_{kj\ell} &\leftarrow\frac{\sum^U_{u=1}n_{u}\ind{Y_{uj} = \ell}\widehat{\zeta}_{uk}}{\sum^{U}_{u=1}n_{u}\widehat{\zeta}_{uk}}
 \end{align}
 
 And the log-likelihood will also only require looping through the profiles:
@@ -176,12 +176,12 @@ This setup uses the trichotomous outcome \(\ell \in \{0, 1,  2\}\) where \(Y_{ij
 
 \paragraph{Categories of uncontestedness} Now we introduce a new layer: voter \(i\) for a given office \(j\) is in one of three settings, denoted by \(M_{ij} \in \{1, 2, 3\}\). Unlike the cluster \(Z_i\), that status is exactly observed in the data. Denote \(M_{ij} = 3\) to mean vote \(j\) for voter \(i\) falls in the \emph{contested} case, so the voter has all three options on the menu. Denote \(M_{ij} = 2\) as the case when only the \emph{preferred party's} candidate is in the contest, so the voter only has options \(Y_{ij} \in \{0, 2\}\). Finally denote \(M_{ij} = 1\) as the case when only the \emph{opposed party's} candidate is in the contest, so the voter only has the option to abstain or ``reluctantly'' vote for the less favored option by splitting: \(Y_{i} \in \{0, 1\}\).
 
-\paragraph{Moving from a Multinomial model to a logit model} To express the choice probability for option \(\ell\) for office \(j\) among voters of type \(k\), let us introduce another parameter \(\bps\) which represents the intensity of preference for option \(\ell \in \{1, 2\}\) relative to \(\ell = 0\) (abstention). We set the baseline for abstention to be 0, i.e. \(\psi_{jk,(\ell=0)} = 0 ~\forall~ j, k\).  Then the log-likelihood can be expressed in three parts. Formally, let \(V_{jk}(Y_{ij} = \ell)\) quantify the utility a voter gets for voting for voting for option \(\ell\).
+\paragraph{Moving from a Multinomial model to a logit model} To express the choice probability for option \(\ell\) for office \(j\) among voters of type \(k\), let us introduce another parameter \(\bps\) which represents the intensity of preference for option \(\ell \in \{1, 2\}\) relative to \(\ell = 0\) (abstention). We set the baseline for abstention to be 0, i.e. \(\psi_{kj,(\ell=0)} = 0 ~\forall~ k, j\).  Then the log-likelihood can be expressed in three parts. Formally, let \(V_{lk}(Y_{ij} = \ell)\) quantify the utility a voter gets for voting for voting for option \(\ell\).
  
 \begin{align*}
 \begin{cases}
-\text{For }\ell = 0: & \psi_{jk0} \stackrel{\text{set}}{=} 0\\
-\text{For }\ell \in \{1, 2\}: & \psi_{jk\ell} \equiv V_{jk}(Y_{ij} = \ell) - \psi_{jk\ell}\\
+\text{For }\ell = 0: & \psi_{kj0} \stackrel{\text{set}}{=} 0\\
+\text{For }\ell \in \{1, 2\}: & \psi_{kj\ell} \equiv V_{kj}(Y_{ij} = \ell \mid Z_i = k) - \psi_{kj\ell}\\
 \end{cases}
 \end{align*}
 
@@ -193,47 +193,54 @@ Of course, how much utility translates into vote choice is an empirical question
 \begin{align}
 \mu_{j\ell} &= \ind{M_{j}= 1}\frac{\exp{\psi_{j\ell}}}{\sum_{\ell^\prime \in \{0, 1\}}\exp{\psi_{j\ell^\prime}}}\nonumber \\
 &\qquad +\ind{M_{j}= 2}\frac{\exp{\psi_{j\ell}}}{\sum_{\ell^\prime \in \{0, 2\}}\exp{\psi_{j\ell^\prime}}}\nonumber \\
-&\qquad\qquad +\ind{M_{j}= 3}\frac{\exp{\psi_{j\ell}}}{\sum_{\ell^\prime \in \{0, 1, 2\}}\exp{\psi_{j\ell^\prime}}}\label{eq:missing}
+&\qquad\qquad +\ind{M_{j}= 3}\frac{\exp{\psi_{j\ell}}}{\sum_{\ell^\prime \in \{0, 1, 2\}}\exp{\psi_{j\ell^\prime}}}
 \end{align}
 
 Now we add the clustering and individual indices back in for the real data, effectively another layer to account for the fact that individuals are both of a type (\(Z_i\)) and each separate office is also of a missingness type \(M_{ij}\):
 
 
 \begin{align}
-\mu_{jk\ell} &= \sum^K_{k=1}\ind{Z_i = k, M_{ij}= 1}\frac{\exp{\psi_{kj\ell}}}{\sum_{\ell^\prime \in \{0, 1\}}\exp{\psi_{kj\ell^\prime}}}\nonumber \\
+\mu_{kj\ell} &= \sum^K_{k=1}\ind{Z_i = k, M_{ij}= 1}\frac{\exp{\psi_{kj\ell}}}{\sum_{\ell^\prime \in \{0, 1\}}\exp{\psi_{kj\ell^\prime}}}\nonumber \\
 &\qquad +\sum^K_{k=1}\ind{Z_i = k, M_{ij}= 2}\frac{\exp{\psi_{kj\ell}}}{\sum_{\ell^\prime \in \{0, 2\}}\exp{\psi_{kj\ell^\prime}}}\nonumber \\
 &\qquad\qquad +\sum^K_{k=1}\ind{Z_i = k, M_{ij}= 3}\frac{\exp{\psi_{kj\ell}}}{\sum_{\ell^\prime \in \{0, 1, 2\}}\exp{\psi_{kj\ell^\prime}}}\label{eq:missing}
 \end{align}
 
 
-\paragraph{Analog to Multinomial Logit} Because \(\exp(\psi_{jk\ell}) = 1\) for \(\ell = 0\), which exists in all three components, each component is analogous to a simple multinomial logit. In the first two cases, since we consider only two possibilities, it reduces to a simple intercept-only logit. Also notice that we use the same set of parameters \(\bps_{jk}\) regardless of \(M_{ij}\). This represents the well-known independence of irrelevant alternatives (IIA) assumption in multinomial logit. The choice probabilities when one option is not on the ``menu'' is assumed to follow the same type of decision rule as the ratio between the existing options.  We can therefore think of equation \ref{eq:missing} as representing that the relevant parameter \(\mu\) for each individual takes one of the types depending on the (known) class of menu options, without introducing more parameters into the model.
+\paragraph{Analog to Multinomial Logit} Because \(\exp(\psi_{kj\ell}) = 1\) for \(\ell = 0\), which exists in all three components, each component is analogous to a simple multinomial logit. In the first two cases, since we consider only two possibilities, it reduces to a simple intercept-only logit. Also notice that we use the same set of parameters \(\bps_{kj}\) regardless of \(M_{ij}\). This represents the well-known independence of irrelevant alternatives (IIA) assumption in multinomial logit. The choice probabilities when one option is not on the ``menu'' is assumed to follow the same type of decision rule as the ratio between the existing options.  We can therefore think of equation \ref{eq:missing} as representing that the relevant parameter \(\mu\) for each individual takes one of the types depending on the (known) class of menu options, without introducing more parameters into the model.
 
 \paragraph{EM Estimation} We can use this new representation of the parameter \(\mu\) in the EM algorithm. The three components in equation \ref{eq:missing} can be cast as a multinomial logit. R packages of multinomial logit typically presume IIA if an outcome value is missing and implicitly do the kind of three-way subsetting as in eq. \ref{eq:missing}. The required data would be of the ``long'' form
 
 \begin{table}[!h]
 \centering
 \singlespacing
-\begin{tabularx}{0.45\textwidth}{ccccc}
+\begin{tabular}{cccccccc}
 \toprule
-Voter &  Office & \(M_i\) & Option $\ell$ &  \(Y_{ij}\)\\\midrule
-\(i = 1\) & \(j = 1\) & 3 & 0 & \texttt{FALSE}\\
-\(i = 1\) & \(j = 1\) & 3 & 1 & \texttt{FALSE}\\
-\(i = 1\) & \(j = 1\) & 3 & 2 & \texttt{TRUE}\\\addlinespace
-\(i = 1\) & \(j = 2\) & 2 & 0 & \texttt{FALSE}\\
-\(i = 1\) & \(j = 2\) & 2 & 1 & \textcolor{crimson}{\texttt{NA}}\\
-\(i = 1\) & \(j = 2\) & 2 & 2 & \texttt{TRUE}\\\addlinespace
-\(i = 1\) & \(j = 3\) & 1 & 0 & \texttt{FALSE}\\
-\(i = 1\) & \(j = 3\) & 1 & 1 & \texttt{TRUE}\\
-\(i = 1\) & \(j = 3\) & 1 & 2 & \textcolor{crimson}{\texttt{NA}}\\
+Voter     & \(\zeta_{i1}\) & \(\cdots\) & \(\zeta_{iK}\) &   Office & \(M_i\) & Option $\ell$ &  \(Y_{ij} = \ell\)\\\midrule
+\(i = 1\) & 0.12 & \(\cdots\) & 0.05 &  \(j = 1\) & 3 & 0 & \texttt{FALSE}\\
+\(i = 1\) & 0.12 & \(\cdots\) & 0.05 &  \(j = 1\) & 3 & 1 & \texttt{FALSE}\\
+\(i = 1\) & 0.12 & \(\cdots\) & 0.05 &  \(j = 1\) & 3 & 2 & \texttt{TRUE}\\\addlinespace
+\(i = 1\) & 0.12 & \(\cdots\) & 0.05 &  \(j = 2\) & 2 & 0 & \texttt{FALSE}\\
+\(i = 1\) & 0.12 & \(\cdots\) & 0.05 &  \(j = 2\) & 2 & 1 & \textcolor{crimson}{\texttt{NA}}\\
+\(i = 1\) & 0.12 & \(\cdots\) & 0.05 &  \(j = 2\) & 2 & 2 & \texttt{TRUE}\\\addlinespace
+\(i = 1\) & 0.12 & \(\cdots\) & 0.05 &  \(j = 3\) & 1 & 0 & \texttt{FALSE}\\
+\(i = 1\) & 0.12 & \(\cdots\) & 0.05 &  \(j = 3\) & 1 & 1 & \texttt{TRUE}\\
+\(i = 1\) & 0.12 & \(\cdots\) & 0.05 &  \(j = 3\) & 1 & 2 & \textcolor{crimson}{\texttt{NA}}\\\addlinespace
+\(i = 2\) & 0.01 & \(\cdots\) & 0.80 &  \(j = 1\) & 3 & 0 & \texttt{FALSE}\\
+\(i = 2\) & 0.01 & \(\cdots\) & 0.80 &  \(j = 1\) & 3 & 1 & \texttt{FALSE}\\
+\(i = 2\) & 0.01 & \(\cdots\) & 0.80 &  \(j = 1\) & 3 & 2 & \texttt{TRUE}\\
 \bottomrule
-\end{tabularx}
+\end{tabular}
 \end{table}
 
 Here again, we've set aside the clustered nature. With that simplification, this data would allow for the simple syntax \texttt{m <- mlogit(Y $\sim$ 1, data = votes)}.  
 
-We will estimate this regression separately for each \(k \in \{1, ..., K\}\), using the estimates of \(\widehat\zeta_{ik}\), which represents the posterior probability of voter \(i\) being in cluster \(k\), as the weights of the logit. 
+We will estimate this regression separately for each \(k \in \{1, ..., K\}\), using the estimates of \(\widehat\zeta_{ik}\), which represents the posterior probability of voter \(i\) being in cluster \(k\), as the weights of the logit:
+\begin{align}
+\text{for each \(k\), update: }~~~  \widehat{\theta}_{k} &\leftarrow \frac{1}{N}\sum^N_{i = 1}\widehat{\zeta}_{ik} \\
+\text{for each \(k, j, \ell\), update: }~~~ \widehat{\mu}_{kj\ell} &\leftarrow \texttt{coef(mlogit(Y[[j]] \(\sim\) 1, data, weights = zeta\_k))[l]}
+\end{align}
 
-We then read off the two coefficients (relative to baseline), which will determine the value for \(\mu_{jk\ell}\). 
+We then read off the two coefficients (relative to baseline), which will determine the value for \(\mu_{kj\ell}\). 
 
 
 
