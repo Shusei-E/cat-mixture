@@ -28,7 +28,7 @@ U <- length(n_u)
 data_ch <- list(
   D = D,
   N = nrow(ch_sub),
-  L = length(unique(unlist(unique_y_mat))),
+  L = n_distinct(unlist(unique_y_mat)) - 1,
   y = ch_sub[, ind_y],
   uy = unique_y_mat,
   n_u = n_u,
