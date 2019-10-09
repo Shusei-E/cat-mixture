@@ -10,11 +10,10 @@ source("03_define_EM-fun.R")
 data <- read_rds("data/sim-data.Rds")
 params <- read_rds("data/sim-params.Rds")
 store_iter <- read_rds("data/EM/sim-iterations.Rds")
-ch_iter <- read_rds("data/EM/charleston-iterations_trichotomous.Rds")
+
 
 # Diagnostics ---------
 params_stacked <- summ_params(store_iter)
-params_ch <- summ_params(ch_iter)
 
 
 # plot max of diff

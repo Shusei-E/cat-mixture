@@ -1,7 +1,6 @@
 library(tidyverse)
 
 ch <- read_rds("data/split_ch-2018.Rds")
-
 ch_sub <- ch %>% filter(!is.na(HOU_split),
               !is.na(CCD_split))
 
@@ -36,7 +35,6 @@ data_ch <- list(
 )
 
 
-
 # EM -----
 source("03_define_EM-fun.R")
 store_iter <- cat_mixture(data_ch, user_K = 2, n_iter = 100)
@@ -46,4 +44,28 @@ round(store_iter[[5]]$theta, 2)
 # Store -------
 write_rds(store_iter, "data/EM/charleston-iterations_trichotomous.Rds")
 
-# ggsave("figures/ch-complete_EM_change-in-params.pdf", w = 4, h = 4)
+
+# Diagnose ----
+ch_iter <- read_rds("data/EM/charleston-iterations_trichotomous.Rds")
+ch_params <- summ_params(ch_iter, data_ch, calc_loglik = FALSE)
+
+
+ch_params %>%
+  mutate(llobs_scale = loglik_obs / (data_ch$N*data_ch$D)) %>%
+  group_by(iter) %>%
+  summarize(`Maximum Change in Parameter (probability scale)` = max(diff),
+            `Observed Log Likelihood (per data point)` = unique(llobs_scale)) %>%
+  pivot_longer(cols = -c(iter), names_to = "metric", values_to = "value") %>%
+  ggplot(aes(iter, value)) +
+  facet_rep_wrap(~metric, scales = "free_y", ncol = 1) +
+  coord_capped_cart(bottom='both', left = 'both') +
+  geom_point(size = 0.5) +
+  geom_line() +
+  theme_clean() +
+  theme(plot.background = element_rect(color = NA),
+        axis.line = element_line(color = "black"),
+        plot.title = element_text(hjust = 0.5, face = "bold"),
+        plot.caption = element_text(size = 6),
+        strip.background = element_rect(fill = "lightgray"))
+ggsave("figures/ch-complete_EM_change-in-params.pdf", w = 5, h = 3.5)
+
