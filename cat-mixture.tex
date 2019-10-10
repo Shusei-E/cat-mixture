@@ -62,14 +62,13 @@ between variables.\footnote{That dependency can be expressed as \(\mathds{E}(\by
 
 This mixture model lends itself to clustering analysis such as \(K\)-means. Although we can estimate this model in a Bayesian fashion by setting a prior for \(\bth\) and \(\bmu\), the \textsf{Stan} program cannot reliably estimate clustering models like this one by MCMC because of label-switching and multimodality. 
 
-Because the model is simple enough, we can derive an algorithm to obtain the global solution for the parameters.\footnote{Thanks to Soichiro Yamauchi for deriving this algorithm in the original iteration.} An EM implementation makes it possible to handle extensions, such as systematic missing data, multinomial outcomes, and covariates. 
+Because the model is simple enough, we can derive an algorithm to obtain the global solution for the parameters.\footnote{Thanks to Soichiro Yamauchi for deriving this algorithm in the original iteration.} Compared to off-the-shelf algorithms like K-means clustering, an EM approach can handle extensions such as discrete and unordered multinomial outcomes, systematic missing data, and covariates. 
 
 \paragraph{Complete Likelihood} If we knew the cluster assignment, we would be able to write the complete log-likelihood (\(\mathcal{L}_{\text{comp}}\)). First start with the joint probability of the outcome data and the cluster assignment:
 \begin{align}
 \Pr(\bY, \bZ \mid \bmu, \bth) &= \Pr(\bY \mid \bZ, \bmu, \bth)\Pr(\bZ \mid \bth)\nonumber\\
 &= \prod^{N}_{i=1}\prod^{D}_{j=1}\Pr(Y_{ij} \mid \bZ, \bmu) \prod^N_{i=1}\Pr(Z_i \mid \bth)\nonumber\\
-&= \prod^{N}_{i=1}\prod^{D}_{j=1}\prod^{K}_{k=1}\left\{\prod^{L}_{\ell=0}\pr{Y_{ij} = \ell | Z_i = k}\right\}^{\ind{Z_i=k}} \prod^N_{i=1}\prod^K_{k=1}\pr{Z_i = {k} \mid \bth}^{\ind{Z_i = k}}\nonumber \\
-&= \prod^{N}_{i=1}\prod^{D}_{j=1}\prod^{K}_{k=1}\prod^{L}_{\ell=0}\pr{Y_{ij} = \ell \mid Z_{i} = k, \bmu}^{\ind{Y_{ij} = \ell, Z_i = k}} \prod^N_{i=1}\prod^K_{k=1}\pr{Z_i = {k} \mid \bth}^{\ind{Z_i = k}}\nonumber
+&= \prod^{N}_{i=1}\prod^{D}_{j=1}\prod^{K}_{k=1}\left\{\prod^{L}_{\ell=0}\pr{Y_{ij} = \ell | Z_i = k}\right\}^{\ind{Z_i=k}} \prod^N_{i=1}\prod^K_{k=1}\pr{Z_i = {k} \mid \bth}^{\ind{Z_i = k}}\nonumber
 \end{align}
 
 Therefore, the complete log-likelihood is computed by taking the log of this:
@@ -100,7 +99,7 @@ We first take expectations over the latent variable $Z_{i}$,
 Then the E-step can be the normalized version of the posterior probability marginalized by the mixing proportion,
 
 \begin{align}
-\widehat{\zeta}_{ij} \propto \bth_k\prod^D_{j = 1}\underbrace{\prod^{L}_{\ell = 0}\left(\bmu_{kj\ell}\right)^{\ind{Y_{ij} = \ell}}}_{\bmu_{kj, Y_{ij}}}
+\widehat{\zeta}_{ik} \propto \bth_k\prod^D_{j = 1}\underbrace{\prod^{L}_{\ell = 0}\left(\bmu_{kj\ell}\right)^{\ind{Y_{ij} = \ell}}}_{\bmu_{kj, Y_{ij}}}
 \end{align}
 
 The M-step is derived by taking the derivatives of \(\E{\mathcal{L}_{\text{comp}}}\) with respect to the model parameters \(\bmu\) and \(\bth\). This leads to a MLE-like M-step
@@ -120,7 +119,7 @@ Then we iterate as follows. For each voter \(i\), compute the probability that t
 {\sum^{K}_{k^\prime=1}\bm{\theta}_{k^\prime}\prod^{D}_{j=1}\bm{\mu}_{k^\prime j,Y_{ij}}}
 \end{align}
 
-Then given those type probabilities, in the M-step. We can show from a Lagrangian maximization problem that the new parameters are MLEs. For updating \(\theta_k\), we take the simple average of \(\widehat\zeta_{ik}\) across all \(i\). For updating \(\widehat\mu_{kj\ell}\), for each \(k\) and \(\ell\) we take the sample proportion of the occurrence of \(Y_{ij} = \ell\), but weighted by \(\widehat\zeta_{ik}\):
+Then given those type probabilities, we update the parameters in the M-step. We can show from a Lagrangian maximization problem that the new parameters are MLEs. For updating \(\theta_k\), we take the simple average of \(\widehat\zeta_{ik}\) across all \(i\). For updating \(\widehat\mu_{kj\ell}\), for each \(k\) and \(\ell\) we take the sample proportion of the occurrence of \(Y_{ij} = \ell\), but weighted by \(\widehat\zeta_{ik}\):
 \begin{align}
 \text{for each \(k\), update: }~~~  \widehat{\theta}_{k} &\leftarrow \frac{1}{N}\sum^N_{i = 1}\widehat{\zeta}_{ik} \\
 \text{for each \(k, j, \ell\), update: }~~~ \widehat{\mu}_{kj\ell} &\leftarrow\frac{\sum^N_{i=1}\ind{Y_{ij} = \ell}\widehat{\zeta}_{ik}}{\sum^{N}_{i=1}\widehat{\zeta}_{ik}}
@@ -189,17 +188,17 @@ Of course, how much utility translates into vote choice is an empirical question
 \paragraph{Parameterization} To show the essence of this modeling choice, the below shows the case when there are no clusters \(K = 1\) and no latent heterogeneity across individuals for simplicity. Then the indices \(i, k\) drop and we get
 
 \begin{align}
-\mu_{j\ell} &= \ind{M_{j}= 1}\frac{\exp{\psi_{j\ell}}}{\sum_{\ell^\prime \in \{0, 1\}}\exp{\psi_{j\ell^\prime}}} +\ind{M_{j}= 2}\frac{\exp{\psi_{j\ell}}}{\sum_{\ell^\prime \in \{0, 2\}}\exp{\psi_{j\ell^\prime}}}\nonumber +\ind{M_{j}= 3}\frac{\exp{\psi_{j\ell}}}{\sum_{\ell^\prime \in \{0, 1, 2\}}\exp{\psi_{j\ell^\prime}}}\nonumber\\
-&= \ind{M_{j}= 1}\frac{\exp{\psi_{j\ell}}}{1 + \exp{\psi_{j1}}} +\ind{M_{j}= 2}\frac{\exp{\psi_{j\ell}}}{1 + \exp{\psi_{j2}}} +\ind{M_{j}= 3}\frac{\exp{\psi_{j\ell}}}{1 + \exp{\psi_{j1}} + \exp{\psi_{j2}}}\nonumber
+\mu_{j\ell} &= \ind{M_{j}= 1}\frac{\exp{(\psi_{j\ell}})}{\sum_{\ell^\prime \in \{0, 1\}}\exp{(\psi_{j\ell^\prime})}} +\ind{M_{j}= 2}\frac{\exp{(\psi_{j\ell})}}{\sum_{\ell^\prime \in \{0, 2\}}\exp{(\psi_{j\ell^\prime}})}\nonumber +\ind{M_{j}= 3}\frac{\exp{(\psi_{j\ell}})}{\sum_{\ell^\prime \in \{0, 1, 2\}}\exp{(\psi_{j\ell^\prime}})}\nonumber\\
+&= \ind{M_{j}= 1}\frac{\exp{(\psi_{j\ell})}}{1 + \exp{(\psi_{j1})}} +\ind{M_{j}= 2}\frac{\exp{(\psi_{j\ell})}}{1 + \exp{(\psi_{j2})}} +\ind{M_{j}= 3}\frac{\exp{(\psi_{j\ell})}}{1 + \exp{(\psi_{j1})} + \exp{(\psi_{j2}})}\nonumber
 \end{align}
 
 Now we add the clustering and individual indices back in for the real data, effectively another layer to account for the fact that individuals are both of a type (\(Z_i\)) and each separate office is also of a missingness type \(M_{ij}\):
 
 
 \begin{align}
-\mu_{kj\ell} &= \sum^K_{k=1}\ind{Z_i = k, M_{ij}= 1}\frac{\exp{\psi_{kj\ell}}}{\sum_{\ell^\prime \in \{0, 1\}}\exp{\psi_{kj\ell^\prime}}}\nonumber \\
-&\qquad +\sum^K_{k=1}\ind{Z_i = k, M_{ij}= 2}\frac{\exp{\psi_{kj\ell}}}{\sum_{\ell^\prime \in \{0, 2\}}\exp{\psi_{kj\ell^\prime}}}\nonumber \\
-&\qquad\qquad +\sum^K_{k=1}\ind{Z_i = k, M_{ij}= 3}\frac{\exp{\psi_{kj\ell}}}{\sum_{\ell^\prime \in \{0, 1, 2\}}\exp{\psi_{kj\ell^\prime}}}\label{eq:missing}
+\mu_{kj\ell} &= \sum^K_{k=1}\ind{Z_i = k, M_{ij}= 1}\frac{\exp{(\psi_{kj\ell})}}{\sum_{\ell^\prime \in \{0, 1\}}\exp{(\psi_{kj\ell^\prime})}}\nonumber \\
+&\qquad +\sum^K_{k=1}\ind{Z_i = k, M_{ij}= 2}\frac{\exp{(\psi_{kj\ell})}}{\sum_{\ell^\prime \in \{0, 2\}}\exp{(\psi_{kj\ell^\prime})}}\nonumber \\
+&\qquad\qquad +\sum^K_{k=1}\ind{Z_i = k, M_{ij}= 3}\frac{\exp{(\psi_{kj\ell})}}{\sum_{\ell^\prime \in \{0, 1, 2\}}\exp{(\psi_{kj\ell^\prime})}}\label{eq:missing}
 \end{align}
 
 
