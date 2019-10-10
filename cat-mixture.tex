@@ -24,7 +24,7 @@ excluding the top of the ticket as \(j \in \{1, ..., D\}\). The data we
 observe is a length-\(D\) vector of votes \(\bY_i\). \(Y_{ij}\) is a
 discrete response value, \(Y_{ij} \in \{0, ..., L\}\). 
 
-In the simplest case \(L = 1\), we code each vote \(y_{ij}\) an indicator for splitting their ticket or not. \(Y_{ij} = 1\) would mean voter \(i\) splitting their ticket in some office \(j\), with reference to a top of the ticket office like the President or Governor. When \(L = 2\), we can consider three outcomes: abstention \(Y_{ij} = 0\), split \(Y_{ij} = 0\), or straight \(Y_{ij} = 2\).
+In the simplest case \(L = 1\), we code each vote \(y_{ij}\) an indicator for splitting their ticket or not. \(Y_{ij} = 1\) would mean voter \(i\) splitting their ticket in some office \(j\), with reference to a top of the ticket office like the President or Governor. When \(L = 2\), we can consider three outcomes: abstention \(Y_{ij} = 0\), split \(Y_{ij} = 1\), or straight \(Y_{ij} = 2\).
 
 
 \paragraph{Parameters}
@@ -160,9 +160,7 @@ Then given those type probabilities, update with
 \text{for each \(k, j, \ell\), update: }~~~   \widehat{\mu}_{kj\ell} &\leftarrow\frac{\sum^U_{u=1}n_{u}\ind{Y_{uj} = \ell}\widehat{\zeta}_{uk}}{\sum^{U}_{u=1}n_{u}\widehat{\zeta}_{uk}}
 \end{align}
 
-And the log-likelihood will also only require looping through the profiles:
-
-So the log-likelihood is
+And the observed log-likelihood will also only require looping through the profiles:
 \begin{align}
 \mathcal{L}_{\text{obs}} &= \sum^{U}_{u=1}\log n_u + \sum^{U}_{u=1}\log\left\{\sum^{K}_{k=1}\theta_k \prod^{D}_{j=1}\bm{\mu}_{kj,Y_{ij}}\right\}
 \end{align}
@@ -191,9 +189,8 @@ Of course, how much utility translates into vote choice is an empirical question
 \paragraph{Parameterization} To show the essence of this modeling choice, the below shows the case when there are no clusters \(K = 1\) and no latent heterogeneity across individuals for simplicity. Then the indices \(i, k\) drop and we get
 
 \begin{align}
-\mu_{j\ell} &= \ind{M_{j}= 1}\frac{\exp{\psi_{j\ell}}}{\sum_{\ell^\prime \in \{0, 1\}}\exp{\psi_{j\ell^\prime}}}\nonumber \\
-&\qquad +\ind{M_{j}= 2}\frac{\exp{\psi_{j\ell}}}{\sum_{\ell^\prime \in \{0, 2\}}\exp{\psi_{j\ell^\prime}}}\nonumber \\
-&\qquad\qquad +\ind{M_{j}= 3}\frac{\exp{\psi_{j\ell}}}{\sum_{\ell^\prime \in \{0, 1, 2\}}\exp{\psi_{j\ell^\prime}}}
+\mu_{j\ell} &= \ind{M_{j}= 1}\frac{\exp{\psi_{j\ell}}}{\sum_{\ell^\prime \in \{0, 1\}}\exp{\psi_{j\ell^\prime}}} +\ind{M_{j}= 2}\frac{\exp{\psi_{j\ell}}}{\sum_{\ell^\prime \in \{0, 2\}}\exp{\psi_{j\ell^\prime}}}\nonumber +\ind{M_{j}= 3}\frac{\exp{\psi_{j\ell}}}{\sum_{\ell^\prime \in \{0, 1, 2\}}\exp{\psi_{j\ell^\prime}}}\nonumber\\
+&= \ind{M_{j}= 1}\frac{\exp{\psi_{j\ell}}}{1 + \exp{\psi_{j1}}} +\ind{M_{j}= 2}\frac{\exp{\psi_{j\ell}}}{1 + \exp{\psi_{j2}}} +\ind{M_{j}= 3}\frac{\exp{\psi_{j\ell}}}{1 + \exp{\psi_{j1}} + \exp{\psi_{j2}}}\nonumber
 \end{align}
 
 Now we add the clustering and individual indices back in for the real data, effectively another layer to account for the fact that individuals are both of a type (\(Z_i\)) and each separate office is also of a missingness type \(M_{ij}\):
@@ -215,7 +212,9 @@ Now we add the clustering and individual indices back in for the real data, effe
 \singlespacing
 \begin{tabular}{cccccccc}
 \toprule
-Voter     & \(\zeta_{i1}\) & \(\cdots\) & \(\zeta_{iK}\) &   Office & \(M_i\) & Option $\ell$ &  \(Y_{ij} = \ell\)\\\midrule
+\multicolumn{4}{c}{Voter level} & \multicolumn{2}{c}{Voter-office level} & \multicolumn{2}{c}{Choice}\\
+\cmidrule(lr){1-4} \cmidrule(lr){5-6}\cmidrule(lr){7-8}
+Voter     & \(\zeta_{i1}\) & \(\cdots\) & \(\zeta_{iK}\) &   Office & \(M_{ij}\) status & Option $\ell$ &  \(Y_{ij} = \ell\)\\\midrule
 \(i = 1\) & 0.12 & \(\cdots\) & 0.05 &  \(j = 1\) & 3 & 0 & \texttt{FALSE}\\
 \(i = 1\) & 0.12 & \(\cdots\) & 0.05 &  \(j = 1\) & 3 & 1 & \texttt{FALSE}\\
 \(i = 1\) & 0.12 & \(\cdots\) & 0.05 &  \(j = 1\) & 3 & 2 & \texttt{TRUE}\\\addlinespace
@@ -232,15 +231,13 @@ Voter     & \(\zeta_{i1}\) & \(\cdots\) & \(\zeta_{iK}\) &   Office & \(M_i\) & 
 \end{tabular}
 \end{table}
 
-Here again, we've set aside the clustered nature. With that simplification, this data would allow for the simple syntax \texttt{m <- mlogit(Y $\sim$ 1, data = votes)}.  
-
-We will estimate this regression separately for each \(k \in \{1, ..., K\}\), using the estimates of \(\widehat\zeta_{ik}\), which represents the posterior probability of voter \(i\) being in cluster \(k\), as the weights of the logit:
+We will estimate this regression separately for each \(k \in \{1, ..., K\}\), using the estimates of \(\bm{\zeta}_{k}\), which represents the posterior probability of voter \(i \in \{1, ..., K\}\) being in cluster \(k\), as the weights of the logit:
 \begin{align}
 \text{for each \(k\), update: }~~~  \widehat{\theta}_{k} &\leftarrow \frac{1}{N}\sum^N_{i = 1}\widehat{\zeta}_{ik} \\
 \text{for each \(k, j, \ell\), update: }~~~ \widehat{\mu}_{kj\ell} &\leftarrow \texttt{coef(mlogit(Y[[j]] \(\sim\) 1, data, weights = zeta\_k))[l]}
 \end{align}
 
-We then read off the two coefficients (relative to baseline), which will determine the value for \(\mu_{kj\ell}\). 
+We can translate the two coefficients \(\widehat\psi_{kj1}\) and  \(\widehat\psi_{kj2}\) along with the fixed \(\widehat\psi_{kj0} = 0\) into a simplex \(\bmu_{kj}\) by  the exponential transformation: \(\mu_{kj\ell} = \frac{\exp\left(\widehat\psi_{kj\ell}\right)}{1 + \exp\left(\widehat\psi_{kj1}\right) + \exp\left(\widehat\psi_{kj2}\right)}\)
 
 
 
