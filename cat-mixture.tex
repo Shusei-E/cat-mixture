@@ -68,16 +68,15 @@ Because the model is simple enough, we can derive an algorithm to obtain the glo
 \begin{align}
 \Pr(\bY, \bZ \mid \bmu, \bth) &= \Pr(\bY \mid \bZ, \bmu, \bth)\Pr(\bZ \mid \bth)\nonumber\\
 &= \prod^{N}_{i=1}\prod^{D}_{j=1}\Pr(Y_{ij} \mid \bZ, \bmu) \prod^N_{i=1}\Pr(Z_i \mid \bth)\nonumber\\
-&= \prod^{N}_{i=1}\prod^{D}_{j=1}\prod^{K}_{k=1}\left\{\prod^{L}_{\ell=0}\pr{Y_{ij} = \ell | Z_i = k}\right\}^{\ind{Z_i=k}} \prod^N_{i=1}\prod^K_{k=1}\pr{Z_i = {k} \mid \bth}^{\ind{Z_i = k}}\nonumber
+&= \prod^{N}_{i=1}\prod^{D}_{j=1}\prod^{K}_{k=1}\left\{\prod^{L}_{\ell=0}\pr{Y_{ij} = \ell | Z_i = k}^{\ind{Y_{ij} = \ell}}\right\}^{\ind{Z_i=k}} \prod^N_{i=1}\prod^K_{k=1}\pr{Z_i = {k} \mid \bth}^{\ind{Z_i = k}}\nonumber
 \end{align}
 
 Therefore, the complete log-likelihood is computed by taking the log of this:
 \begin{align}
 \mathcal{L}_{\text{comp}}(\bmu, \bth|\bY, \bZ)
 & = \sum^{N}_{i=1}\sum^{D}_{j=1}\sum^{K}_{k=1}\sum^{L}_{\ell = 0}
-\bm{1}\{Y_{ij} = \ell, Z_{i} = k\}\Big\{
-\log \Pr(Y_{ij} = \ell | Z_{i} = k, \bm{\mu})
-\Big\} \nonumber\\
+\bm{1}\{Y_{ij} = \ell, Z_{i} = k\}
+\log \Pr(Y_{ij} = \ell | Z_{i} = k, \bm{\mu})\nonumber\\
 & \qquad +
 \sum^N_{i=1}\sum^{K}_{k=1}\bm{1}\{Z_{i} = k\}\log \Pr(Z_{i} = k | \bm{\theta})
 \end{align}
@@ -86,9 +85,9 @@ We first take expectations over the latent variable $Z_{i}$,
 \begin{align}
 \E{\mathcal{L}_{\text{comp}}}
 & = \sum^{N}_{i=1}\sum^{D}_{j=1}\sum^{K}_{k=1}\sum^{L}_{\ell = 0}
-\bm{1}\{Y_{ij} = \ell\} \E{\bm{1}\{Z_{i} = k\}}\Big\{
+\bm{1}\{Y_{ij} = \ell\} \E{\bm{1}\{Z_{i} = k\}}
 \underbrace{\log \Pr(Y_{ij} = \ell | Z_{i} = k, \bm{\mu})}_{\equiv \log\bm{\mu}_{kj\ell}}
-\Big\} \nonumber\\
+\nonumber\\
 & \qquad +
 \sum^{N}_{i=1}\sum^{K}_{k=1}\E{\bm{1}\{Z_{i} = k\}}\underbrace{\log \Pr(Z_{i} = k | \bm{\theta})}_{= \log \bm{\theta}_{k}}
 \end{align}
@@ -233,10 +232,13 @@ Voter     & \(\zeta_{i1}\) & \(\cdots\) & \(\zeta_{iK}\) &   Office & \(M_{ij}\)
 We will estimate this regression separately for each \(k \in \{1, ..., K\}\), using the estimates of \(\bm{\zeta}_{k}\), which represents the posterior probability of voter \(i \in \{1, ..., K\}\) being in cluster \(k\), as the weights of the logit:
 \begin{align}
 \text{for each \(k\), update: }~~~  \widehat{\theta}_{k} &\leftarrow \frac{1}{N}\sum^N_{i = 1}\widehat{\zeta}_{ik} \\
-\text{for each \(k, j, \ell\), update: }~~~ \widehat{\mu}_{kj\ell} &\leftarrow \texttt{coef(mlogit(Y[[j]] \(\sim\) 1, data, weights = zeta\_k))[l]}
+\text{for each \(k, j, \ell\), update: }~~~ \widehat{\mu}_{kj\ell} &\leftarrow  \frac{\exp\left(\widehat\psi_{kj\ell}\right)}{1 + \exp\left(\widehat\psi_{kj1}\right) + \exp\left(\widehat\psi_{kj2}\right)}
 \end{align}
 
-We can translate the two coefficients \(\widehat\psi_{kj1}\) and  \(\widehat\psi_{kj2}\) along with the fixed \(\widehat\psi_{kj0} = 0\) into a simplex \(\bmu_{kj}\) by  the exponential transformation: \(\mu_{kj\ell} = \frac{\exp\left(\widehat\psi_{kj\ell}\right)}{1 + \exp\left(\widehat\psi_{kj1}\right) + \exp\left(\widehat\psi_{kj2}\right)}\)
+Where the \(\bm\psi_{kj}\) vector is estimated from the coefficients of a multinomial logit, of the form 
+\begin{align*}
+\texttt{mlogit(Y[[j]] \(\sim\) 1, data, weights = zeta\_k)}.
+\end{align*}
 
 
 
