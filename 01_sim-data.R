@@ -15,7 +15,7 @@ K <- 3L
 alpha <- (K:1)^(1.5)
 
 #  assume missing by not available data?
-missing <- TRUE
+missing <- FALSE
 
 # cluster assignment
 theta <- rdirichlet(1, alpha)
@@ -104,13 +104,3 @@ if (!missing)
 
 write_rds(params, "data/sim-params.Rds")
 
-# check vanilla k means
-k_vanilla <- kmeans(data$y, centers = K)
-as_tibble(k_vanilla$centers) %>%
-  mutate(n = k_vanilla$size)
-
-# check sample mean | correct cluster assignment
-as_tibble(data$y) %>%
-  mutate(cluster = Z) %>%
-  group_by(cluster) %>%
-  summarize_all(mean)
