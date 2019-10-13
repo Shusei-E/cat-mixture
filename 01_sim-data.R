@@ -6,8 +6,8 @@ library(glue)
 set.seed(02138)
 
 # dimensions
-L <- 1L
-D <- 8L
+L <- 2L
+D <- 5L
 N <- 300L
 K <- 3L
 
