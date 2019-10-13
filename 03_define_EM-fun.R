@@ -63,7 +63,7 @@ vector_params <- function(t, loglik = FALSE, obj, data) {
 
 
 #' Compute EM
-cat_mixture <- function(data, user_K = 3, n_iter = 100, fast = TRUE, IIA = TRUE,
+cat_mixture <- function(data, user_K = 3, n_iter = 100, fast = TRUE, IIA = FALSE,
                         theta = NULL, mu = NULL, zeta_hat  = NULL) {
 
   # Unique profile and speed up? ----
@@ -78,7 +78,6 @@ cat_mixture <- function(data, user_K = 3, n_iter = 100, fast = TRUE, IIA = TRUE,
   if (any(is.null(theta), is.null(mu), is.null(zeta_hat))) {
     # initialize theta {K x 1}
     init_theta = rep(1/user_K, user_K)
-    # init_theta = params$theta # chat by giving it  correct thetas?
 
     # initialize mu {K x D x L}x
     init_Z_table = rmultinom(data$N, size = 1, prob = init_theta)
@@ -96,6 +95,10 @@ cat_mixture <- function(data, user_K = 3, n_iter = 100, fast = TRUE, IIA = TRUE,
 
     # container for zeta {N x K}
     zeta_hat = matrix(NA, nrow = data$U, ncol = user_K)
+
+    # initialize
+    theta = init_theta
+    mu    = init_mu
   }
 
   # iterations ------
@@ -104,11 +107,6 @@ cat_mixture <- function(data, user_K = 3, n_iter = 100, fast = TRUE, IIA = TRUE,
 
   # start EM loop ------
   while (iter <= n_iter) {
-    if (iter == 1) {
-      theta = init_theta
-      mu    = init_mu
-    }
-
     # E step
     for (u in 1:data$U) {
       # responsibility of type k
