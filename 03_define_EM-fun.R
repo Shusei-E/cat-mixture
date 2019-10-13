@@ -139,38 +139,46 @@ cat_mixture <- function(data, user_K = 3, n_iter = 100, fast = TRUE, IIA = FALSE
 
       # update mu
       for (j in 1:data$D) {
-        for (l in data$L:1) {
-          # 1(Y_{ij} = ell)
-          y_matches_l = (data$uy[, j] == l)
 
-          # update mu
-          if (!IIA) {
+        # IIA model
+        if (IIA) {
+          # regression data with missingnesses dropped
+          y_no_na <- tibble(id   = rep(1:data$U, each = data$L + 1),
+                            y_j  = rep(data$uy[, j], each = data$L + 1),
+                            M_j  = rep(data$m[, j], each = data$L + 1),
+                            zeta = rep(zeta_hat[, k], each = (data$L + 1)),
+                            alt  = as.character(rep(0:data$L, data$U))) %>%
+            mutate(y_chosen = y_j == alt) %>%
+            filter(!(M_j == 1 & alt == 2), !(M_j == 2 & alt == 1)) %>%
+            as.data.frame()
+
+          mlogit_d <- mlogit.data(y_no_na,
+                                  choice  = "y_chosen",
+                                  chid.var = "id",
+                                  alt.var = "alt",
+                                  shape = "long")
+
+          # multinomial logit
+          mfit <- mlogit(y_chosen ~ 1, weights = zeta, mlogit_d)
+          mfit_coefs_e <- exp(c(0, coef(mfit)[1:data$L]))
+
+          # rescale to probabilities
+          mu[k, j, ] <- mfit_coefs_e / sum(mfit_coefs_e)
+        }
+
+        if (!IIA) {
+          for (l in data$L:1) {
+            # 1(Y_{ij} = ell)
+            y_matches_l = (data$uy[, j] == l)
+
+            # update mu
             mu[k, j, (l + 1)]  = sum(data$n_u * y_matches_l * zeta_hat[, k]) /
               sum_zeta_k
           }
-          if (IIA) {
-            long_data <- data.frame(id = 1:data$U,
-                                    y_j = data$uy[, j]) %>%
-              mlogit.data(id.var = "id", choice  = "y_j",
-                          shape = "wide",
-                          varying = NULL,
-                          alt.levels = 0:2)
-
-            # weights for k
-            zeta_k_rep <- rep(zeta_hat[, k], each = (data$L + 1))
-            # multinomial logit
-            mfit <- mlogit(y_j ~ 1, long_data, weights = zeta_k_rep)
-            mfit_coefs_e <- exp(c(0, coef(mfit)))
-            # rescale to probabilities
-            mu[k, j, ] <- mfit_coefs_e / sum(mfit_coefs_e)
-            browser()
-          }
+          # last category is 1 minus the rest
+          mu[k, j, (0 + 1)] =  1 - sum(mu[k, j, ((data$L:1) + 1)])
         }
-
-        # last category is 1 minus the rest
-        mu[k, j, (0 + 1)] =  1 - sum(mu[k, j, ((1:data$L) + 1)])
       }
-
     }
 
     # store each iter
