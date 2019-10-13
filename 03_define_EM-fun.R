@@ -147,7 +147,7 @@ cat_mixture <- function(data, user_K = 3, n_iter = 100, fast = TRUE, IIA = FALSE
                             y_j  = rep(data$uy[, j], each = data$L + 1),
                             M_j  = rep(data$m[, j], each = data$L + 1),
                             zeta = rep(zeta_hat[, k], each = (data$L + 1)),
-                            alt  = as.character(rep(0:data$L, data$U))) %>%
+                            alt  = rep(0:data$L, data$U)) %>%
             mutate(y_chosen = y_j == alt) %>%
             filter(!(M_j == 1 & alt == 2), !(M_j == 2 & alt == 1)) %>%
             as.data.frame()
@@ -160,9 +160,9 @@ cat_mixture <- function(data, user_K = 3, n_iter = 100, fast = TRUE, IIA = FALSE
 
           # multinomial logit
           mfit <- mlogit(y_chosen ~ 1, weights = zeta, mlogit_d)
-          mfit_coefs_e <- exp(c(0, coef(mfit)[1:data$L]))
 
           # rescale to probabilities
+          mfit_coefs_e <- exp(c(0, coef(mfit)[1:data$L]))
           mu[k, j, ] <- mfit_coefs_e / sum(mfit_coefs_e)
         }
 
