@@ -24,7 +24,7 @@ excluding the top of the ticket as \(j \in \{1, ..., D\}\). The data we
 observe is a length-\(D\) vector of votes \(\bY_i\). \(Y_{ij}\) is a
 discrete response value, \(Y_{ij} \in \{0, ..., L\}\). 
 
-In the simplest case \(L = 1\), we code each vote \(y_{ij}\) an indicator for splitting their ticket or not. \(Y_{ij} = 1\) would mean voter \(i\) splitting their ticket in some office \(j\), with reference to a top of the ticket office like the President or Governor. When \(L = 2\), we can consider three outcomes: abstention \(Y_{ij} = 0\), split \(Y_{ij} = 1\), or straight \(Y_{ij} = 2\).
+In the simplest case \(L = 1\), we code each vote \(Y_{ij}\) an indicator for splitting their ticket or not. \(Y_{ij} = 1\) would mean voter \(i\) splitting their ticket in some office \(j\), with reference to a top of the ticket office like the President or Governor. When \(L = 2\), we can consider three outcomes: abstention \(Y_{ij} = 0\), split \(Y_{ij} = 1\), or straight \(Y_{ij} = 2\).
 
 
 \paragraph{Parameters}
@@ -137,7 +137,7 @@ We repeat this until convergence.
 
 So the log-likelihood is
 \begin{align}
-\mathcal{L}_{\text{obs}} = \sum^{N}_{i=1}\log \left\{\sum^{K}_{k=1}\theta_k \prod^{D}_{j=1}\bm{\mu}_{kj,Y_{ij}}\right\} \label{eq:obsloglik}
+\mathcal{L}_{\text{obs}} = \sum^{N}_{i=1}\log \left\{\sum^{K}_{k=1}\theta_k \prod^{D}_{j=1}\bm{\mu}_{kj,Y_{ij}}\right\} = \sum^{N}_{i=1}\log \left\{\sum^{K}_{k=1}\theta_k \prod^{D}_{j=1}\prod^{L}_{\ell = 0}\left(\mu_{kj\ell}\right)^{\ind{Y_{ij} = \ell}}\right\} \label{eq:obsloglik}
 \end{align}
 
 Calculating eq. (\ref{eq:obsloglik}) is computationally intensive, so a quick way to check convergence is to track the maximum of the change in parameters which are all on the probability scale, i.e. \(\max\left\{|\widehat\theta^{(t + 1)}_{1} - \widehat\theta^{(t)}_{1}|, ..., |\widehat\mu^{(t + 1)}_{K,D} - \widehat\mu^{(t)}_{K,D}|\right\}\)
@@ -244,17 +244,11 @@ Where the \(\bm\psi_{kj}\) vector is estimated from the coefficients of a multin
 \texttt{mlogit(Y[[j]] \(\sim\) 1, data, weights = zeta\_k)}.
 \end{align*}
 
-% \paragraph{Evaluating Convergence} When following the EM algorithm on this data affected by uncontested choices, the observed log likelihood changes. Recall that in the no-missing case, 
+\paragraph{Evaluating Convergence} When following the EM algorithm on this data affected by uncontested choices, the observed log likelihood changes. Recall that in the no-missing case,  we have equation \ref{eq:obsloglik}. However, in cases of missingness, the contribution of a data point also depends on the contestedness class.
 
-% \begin{align*}
-% \mathcal{L}_{\text{obs}}  = \sum^{N}_{i=1}\log \left\{\sum^{K}_{k=1}\theta_k \prod^{D}_{j=1}\prod^{L}_{\ell = 0}\left(\mu_{kj\ell}\right)^{\ind{Y_{ij} = \ell}}\right\}
-% \end{align*}
-
-% However, in cases of missingness, the contribution of a data point also depends on the contestedness class.
-
-% \begin{align*}
-% \widetilde{\mathcal{L}}_{\text{obs}} = \sum^{N}_{i=1}\log \left\{\sum^{K}_{k=1}\theta_k \prod^{D}_{j=1}\prod^{3}_{m = 1}\prod^{L}_{\ell = 0}\left(\mu_{kj\ell}\right)^{\ind{M_{ij} = m, Y_{ij} = \ell}}\right\}
-% \end{align*}
+\begin{align*}
+{\mathcal{L}}^{\star}_{\text{obs}} = \sum^{N}_{i=1}\log \left\{\sum^{K}_{k=1}\theta_k \prod^{D}_{j=1}\prod^{3}_{m = 1}\prod^{L}_{\ell = 0}\left(\mu_{kj\ell}\right)^{\ind{M_{ij} = m, Y_{ij} = \ell}}\right\}
+\end{align*}
 
 
 \end{document}
