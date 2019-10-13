@@ -98,7 +98,7 @@ We first take expectations over the latent variable $Z_{i}$,
 Then the E-step can be the normalized version of the posterior probability marginalized by the mixing proportion,
 
 \begin{align}
-\widehat{\zeta}_{ik} \propto \bth_k\prod^D_{j = 1}\underbrace{\prod^{L}_{\ell = 0}\left(\bmu_{kj\ell}\right)^{\ind{Y_{ij} = \ell}}}_{\bmu_{kj, Y_{ij}}}
+\widehat{\zeta}_{ik} \propto \bth_k\prod^D_{j = 1}\underbrace{\prod^{L}_{\ell = 0}\left(\mu_{kj\ell}\right)^{\ind{Y_{ij} = \ell}}}_{\bmu_{kj, Y_{ij}}}
 \end{align}
 
 The M-step is derived by taking the derivatives of \(\E{\mathcal{L}_{\text{comp}}}\) with respect to the model parameters \(\bmu\) and \(\bth\). This leads to a MLE-like M-step
@@ -201,30 +201,32 @@ Now we add the clustering and individual indices back in for the real data, effe
 \end{align}
 
 
-\paragraph{Analog to Multinomial Logit} Because \(\exp(\psi_{kj\ell}) = 1\) for \(\ell = 0\), which exists in all three components, each component is analogous to a simple multinomial logit. In the first two cases, since we consider only two possibilities, it reduces to a simple intercept-only logit. Also notice that we use the same set of parameters \(\bps_{kj}\) regardless of \(M_{ij}\). This represents the well-known independence of irrelevant alternatives (IIA) assumption in multinomial logit. The choice probabilities when one option is not on the ``menu'' is assumed to follow the same type of decision rule as the ratio between the existing options.  We can therefore think of equation \ref{eq:missing} as representing that the relevant parameter \(\mu\) for each individual takes one of the types depending on the (known) class of menu options, without introducing more parameters into the model.
+\paragraph{Analog to Multinomial Logit} Because \(\exp(\psi_{kj\ell}) = 1\) for \(\ell = 0\), which exists in all three components, each component is analogous to a simple multinomial logit. In the first two cases, since we consider only two possibilities, it reduces to a simple intercept-only logit. Also notice that we use the same set of parameters \(\bps_{kj}\) regardless of \(M_{ij}\). This represents the well-known independence of irrelevant alternatives (IIA) assumption in multinomial logit. The choice probabilities when one option is not on the ``menu'' is assumed to follow the same type of decision rule as the ratio between the existing options.  
 
-\paragraph{EM Estimation} We can use this new representation of the parameter \(\mu\) in the EM algorithm. The three components in equation \ref{eq:missing} can be cast as a multinomial logit. R packages of multinomial logit typically presume IIA if an outcome value is missing and implicitly do the kind of three-way subsetting as in eq. \ref{eq:missing}. The required data would be of the ``long'' form
+\paragraph{EM Estimation} We can use this new representation of the parameter \(\mu\) in the EM algorithm. The three components in equation \ref{eq:missing} can be cast as a multinomial logit. R packages of multinomial logit typically presume IIA if an outcome value is missing and implicitly do the kind of three-way subsetting as in equation \ref{eq:missing}. The required data would be of the ``long'' form shown in Table \ref{tab:choiceset}.
 
 \begin{table}[!h]
+\caption{How uncontested races affect choice sets \label{tab:choiceset}}
 \centering
 \singlespacing
+\small
 \begin{tabular}{cccccccc}
 \toprule
 \multicolumn{4}{c}{Voter level} & \multicolumn{2}{c}{Voter-office level} & \multicolumn{2}{c}{Choice}\\
 \cmidrule(lr){1-4} \cmidrule(lr){5-6}\cmidrule(lr){7-8}
 Voter     & \(\zeta_{i1}\) & \(\cdots\) & \(\zeta_{iK}\) &   Office & \(M_{ij}\) status & Option $\ell$ &  \(Y_{ij} = \ell\)\\\midrule
-\(i = 1\) & 0.12 & \(\cdots\) & 0.05 &  \(j = 1\) & 3 & 0 & \texttt{FALSE}\\
-\(i = 1\) & 0.12 & \(\cdots\) & 0.05 &  \(j = 1\) & 3 & 1 & \texttt{FALSE}\\
-\(i = 1\) & 0.12 & \(\cdots\) & 0.05 &  \(j = 1\) & 3 & 2 & \texttt{TRUE}\\\addlinespace
-\(i = 1\) & 0.12 & \(\cdots\) & 0.05 &  \(j = 2\) & 2 & 0 & \texttt{FALSE}\\
-\(i = 1\) & 0.12 & \(\cdots\) & 0.05 &  \(j = 2\) & 2 & 1 & \textcolor{crimson}{\texttt{NA}}\\
-\(i = 1\) & 0.12 & \(\cdots\) & 0.05 &  \(j = 2\) & 2 & 2 & \texttt{TRUE}\\\addlinespace
-\(i = 1\) & 0.12 & \(\cdots\) & 0.05 &  \(j = 3\) & 1 & 0 & \texttt{FALSE}\\
-\(i = 1\) & 0.12 & \(\cdots\) & 0.05 &  \(j = 3\) & 1 & 1 & \texttt{TRUE}\\
-\(i = 1\) & 0.12 & \(\cdots\) & 0.05 &  \(j = 3\) & 1 & 2 & \textcolor{crimson}{\texttt{NA}}\\\addlinespace
-\(i = 2\) & 0.01 & \(\cdots\) & 0.80 &  \(j = 1\) & 3 & 0 & \texttt{FALSE}\\
-\(i = 2\) & 0.01 & \(\cdots\) & 0.80 &  \(j = 1\) & 3 & 1 & \texttt{FALSE}\\
-\(i = 2\) & 0.01 & \(\cdots\) & 0.80 &  \(j = 1\) & 3 & 2 & \texttt{TRUE}\\
+\(i = 1\) & 0.12 & \(\cdots\) & 0.05 &  \(j = 1\) & 3 (contested) & 0 & \texttt{FALSE}\\
+\(i = 1\) & 0.12 & \(\cdots\) & 0.05 &  \(j = 1\) & 3 (contested) & 1 & \texttt{FALSE}\\
+\(i = 1\) & 0.12 & \(\cdots\) & 0.05 &  \(j = 1\) & 3 (contested) & 2 & \texttt{TRUE}\\\addlinespace
+\(i = 1\) & 0.12 & \(\cdots\) & 0.05 &  \(j = 2\) & 2 (cannot split) & 0 & \texttt{FALSE}\\
+\(i = 1\) & 0.12 & \(\cdots\) & 0.05 &  \(j = 2\) & 2 (cannot split) & 1 & \textcolor{crimson}{\texttt{NA}}\\
+\(i = 1\) & 0.12 & \(\cdots\) & 0.05 &  \(j = 2\) & 2 (cannot split) & 2 & \texttt{TRUE}\\\addlinespace
+\(i = 1\) & 0.12 & \(\cdots\) & 0.05 &  \(j = 3\) & 1 (cannot straight) & 0 & \texttt{FALSE}\\
+\(i = 1\) & 0.12 & \(\cdots\) & 0.05 &  \(j = 3\) & 1 (cannot straight) & 1 & \texttt{TRUE}\\
+\(i = 1\) & 0.12 & \(\cdots\) & 0.05 &  \(j = 3\) & 1 (cannot straight) & 2 & \textcolor{crimson}{\texttt{NA}}\\\addlinespace
+\(i = 2\) & 0.01 & \(\cdots\) & 0.80 &  \(j = 1\) & 1 (cannot straight) & 0 & \texttt{FALSE}\\
+\(i = 2\) & 0.01 & \(\cdots\) & 0.80 &  \(j = 1\) & 1 (cannot straight) & 1 & \texttt{FALSE}\\
+\(i = 2\) & 0.01 & \(\cdots\) & 0.80 &  \(j = 1\) & 1 (cannot straight) & 2 & \textcolor{crimson}{\texttt{NA}}\\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -240,7 +242,17 @@ Where the \(\bm\psi_{kj}\) vector is estimated from the coefficients of a multin
 \texttt{mlogit(Y[[j]] \(\sim\) 1, data, weights = zeta\_k)}.
 \end{align*}
 
+\paragraph{Evaluating Convergence} When following the EM algorithm on this data affected by uncontested choices, the observed log likelihood changes. Recall that in the no-missing case, 
 
+\begin{align*}
+\mathcal{L}_{\text{obs}}  = \sum^{N}_{i=1}\log \left\{\sum^{K}_{k=1}\theta_k \prod^{D}_{j=1}\prod^{L}_{\ell = 0}\left(\mu_{kj\ell}\right)^{\ind{Y_{ij} = \ell}}\right\}
+\end{align*}
+
+However, in cases of missingness, the contribution of a data point also depends on the contestedness class.
+
+% \begin{align*}
+% \widetilde{\mathcal{L}}_{\text{obs}} = \sum^{N}_{i=1}\log \left\{\sum^{K}_{k=1}\theta_k \prod^{D}_{j=1}\prod^{3}_{m = 1}\prod^{L}_{\ell = 0}\left(\mu_{kj\ell}\right)^{\ind{M_{ij} = m, Y_{ij} = \ell}}\right\}
+% \end{align*}
 
 
 \end{document}
