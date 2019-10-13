@@ -118,7 +118,9 @@ Then we iterate as follows. For each voter \(i\), compute the probability that t
 {\sum^{K}_{k^\prime=1}\bm{\theta}_{k^\prime}\prod^{D}_{j=1}\bm{\mu}_{k^\prime j,Y_{ij}}}
 \end{align}
 
-Then given those type probabilities, we update the parameters in the M-step. We can show from a Lagrangian maximization problem that the new parameters are MLEs. For updating \(\theta_k\), we take the simple average of \(\widehat\zeta_{ik}\) across all \(i\). For updating \(\widehat\mu_{kj\ell}\), for each \(k\) and \(\ell\) we take the sample proportion of the occurrence of \(Y_{ij} = \ell\), but weighted by \(\widehat\zeta_{ik}\):
+Then given those type probabilities, we update the parameters in the M-step. We can show from a Lagrangian maximization problem that the new parameters are MLEs.  Introduce \(K + KJ\) parameters \(\lambda\) and \(\bm{\eta}\), set the combined equation \(\widetilde{\mathcal{L}} = \E{\mathcal{L}_\text{comp}} + \lambda(\sum^{K}_{k=1}\bth_k - 1) + \sum^{K}_{k=1}\sum^{D}_{j=1}\eta_{kj}(\sum^{L}_{\ell=0}\mu_{kj\ell} - 1) \), and estimate it by taking the partial derivatives with respect to the parameters.
+
+That will show that for updating \(\theta_k\), we should take the simple average of \(\widehat\zeta_{ik}\) across all \(i\). For updating \(\widehat\mu_{kj\ell}\), we should take for each \(k\) and \(\ell\) the sample proportion of the occurrence of \(Y_{ij} = \ell\), but weighted by \(\widehat\zeta_{ik}\):
 \begin{align}
 \text{for each \(k\), update: }~~~  \widehat{\theta}_{k} &\leftarrow \frac{1}{N}\sum^N_{i = 1}\widehat{\zeta}_{ik} \\
 \text{for each \(k, j, \ell\), update: }~~~ \widehat{\mu}_{kj\ell} &\leftarrow\frac{\sum^N_{i=1}\ind{Y_{ij} = \ell}\widehat{\zeta}_{ik}}{\sum^{N}_{i=1}\widehat{\zeta}_{ik}}
@@ -242,13 +244,13 @@ Where the \(\bm\psi_{kj}\) vector is estimated from the coefficients of a multin
 \texttt{mlogit(Y[[j]] \(\sim\) 1, data, weights = zeta\_k)}.
 \end{align*}
 
-\paragraph{Evaluating Convergence} When following the EM algorithm on this data affected by uncontested choices, the observed log likelihood changes. Recall that in the no-missing case, 
+% \paragraph{Evaluating Convergence} When following the EM algorithm on this data affected by uncontested choices, the observed log likelihood changes. Recall that in the no-missing case, 
 
-\begin{align*}
-\mathcal{L}_{\text{obs}}  = \sum^{N}_{i=1}\log \left\{\sum^{K}_{k=1}\theta_k \prod^{D}_{j=1}\prod^{L}_{\ell = 0}\left(\mu_{kj\ell}\right)^{\ind{Y_{ij} = \ell}}\right\}
-\end{align*}
+% \begin{align*}
+% \mathcal{L}_{\text{obs}}  = \sum^{N}_{i=1}\log \left\{\sum^{K}_{k=1}\theta_k \prod^{D}_{j=1}\prod^{L}_{\ell = 0}\left(\mu_{kj\ell}\right)^{\ind{Y_{ij} = \ell}}\right\}
+% \end{align*}
 
-However, in cases of missingness, the contribution of a data point also depends on the contestedness class.
+% However, in cases of missingness, the contribution of a data point also depends on the contestedness class.
 
 % \begin{align*}
 % \widetilde{\mathcal{L}}_{\text{obs}} = \sum^{N}_{i=1}\log \left\{\sum^{K}_{k=1}\theta_k \prod^{D}_{j=1}\prod^{3}_{m = 1}\prod^{L}_{\ell = 0}\left(\mu_{kj\ell}\right)^{\ind{M_{ij} = m, Y_{ij} = \ell}}\right\}
