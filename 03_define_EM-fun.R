@@ -1,6 +1,9 @@
 library(tidyverse)
 library(foreach)
 library(glue)
+library(mlogit)
+
+expit <- function(x) 1/(1 + exp(-x))
 
 
 # Diagnosis ----
@@ -60,7 +63,8 @@ vector_params <- function(t, loglik = FALSE, obj, data) {
 
 
 #' Compute EM
-cat_mixture <- function(data, user_K = 3, n_iter = 100, fast = TRUE) {
+cat_mixture <- function(data, user_K = 3, n_iter = 100, fast = TRUE, IIA = TRUE,
+                        theta = NULL, mu = NULL, zeta_hat  = NULL) {
 
   # Unique profile and speed up? ----
   if (!fast) {
@@ -70,28 +74,29 @@ cat_mixture <- function(data, user_K = 3, n_iter = 100, fast = TRUE) {
   }
 
   # Setup -------
-  # initialize theta {K x 1}
-  init_theta = rep(1/user_K, user_K)
-  # init_theta = params$theta # chat by giving it  correct thetas?
+  # unless all values are given, start from initial guesses
+  if (any(is.null(theta), is.null(mu), is.null(zeta_hat))) {
+    # initialize theta {K x 1}
+    init_theta = rep(1/user_K, user_K)
+    # init_theta = params$theta # chat by giving it  correct thetas?
 
-  # initialize mu {K x D x L}x
-  init_Z_table = rmultinom(data$N, size = 1, prob = init_theta)
-  init_Z = map_dbl(1:data$N, ~which(init_Z_table[, .x] == 1))
+    # initialize mu {K x D x L}x
+    init_Z_table = rmultinom(data$N, size = 1, prob = init_theta)
+    init_Z = map_dbl(1:data$N, ~which(init_Z_table[, .x] == 1))
 
-  # data$L
-  mu <- init_mu <- array(NA, dim = c(user_K, data$D, data$L + 1))
-  for (l in 0:data$L) {
-    mu_vector <- flatten_dbl(map(1:user_K, ~colMeans(data$y[init_Z == .x, ] == l)))
-    init_mu[, , l + 1] = matrix(mu_vector, nrow = user_K, byrow = TRUE)
+    # data$L
+    mu <- init_mu <- array(NA, dim = c(user_K, data$D, data$L + 1))
+    for (l in 0:data$L) {
+      mu_vector <- flatten_dbl(map(1:user_K, ~colMeans(data$y[init_Z == .x, ] == l)))
+      init_mu[, , l + 1] = matrix(mu_vector, nrow = user_K, byrow = TRUE)
+    }
+
+    # container for theta
+    theta = rep(NA, user_K)
+
+    # container for zeta {N x K}
+    zeta_hat = matrix(NA, nrow = data$U, ncol = user_K)
   }
-
-  # container for theta
-  theta = rep(NA, user_K)
-
-  # container for zeta {N x K}
-  zeta_hat = matrix(NA, nrow = data$U, ncol = user_K)
-
-
 
   # iterations ------
   iter = 1
@@ -139,9 +144,29 @@ cat_mixture <- function(data, user_K = 3, n_iter = 100, fast = TRUE) {
         for (l in data$L:1) {
           # 1(Y_{ij} = ell)
           y_matches_l = (data$uy[, j] == l)
+
           # update mu
-          mu[k, j, (l + 1)]  = sum(data$n_u * y_matches_l * zeta_hat[, k]) /
-            sum_zeta_k
+          if (!IIA) {
+            mu[k, j, (l + 1)]  = sum(data$n_u * y_matches_l * zeta_hat[, k]) /
+              sum_zeta_k
+          }
+          if (IIA) {
+            long_data <- data.frame(id = 1:data$U,
+                                    y_j = data$uy[, j]) %>%
+              mlogit.data(id.var = "id", choice  = "y_j",
+                          shape = "wide",
+                          varying = NULL,
+                          alt.levels = 0:2)
+
+            # weights for k
+            zeta_k_rep <- rep(zeta_hat[, k], each = (data$L + 1))
+            # multinomial logit
+            mfit <- mlogit(y_j ~ 1, long_data, weights = zeta_k_rep)
+            mfit_coefs_e <- exp(c(0, coef(mfit)))
+            # rescale to probabilities
+            mu[k, j, ] <- mfit_coefs_e / sum(mfit_coefs_e)
+            browser()
+          }
         }
 
         # last category is 1 minus the rest
