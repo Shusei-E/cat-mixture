@@ -14,6 +14,8 @@ K <- 3L
 # hyperparameter
 alpha <- (K:1)^(1.5)
 
+#  assume missing by not available data?
+missing <- TRUE
 
 # cluster assignment
 theta <- rdirichlet(1, alpha)
@@ -21,7 +23,6 @@ Z_table <- rmultinom(N, 1, theta)
 Z <-  map_dbl(1:N,  ~which(Z_table[, .x] == 1))
 
 # set theta parameters
-mu
 mu_k <- list(
   `1` = c(0.05, 0.05, 0.90),
   `2` = c(0.10, 0.10, 0.80),
@@ -42,18 +43,26 @@ for (k in 1:K) {
 }
 
 # Missingness
-m <- array(sample(1:3, size = N*D, replace = TRUE), dim = c(N, D))
+if (missing)
+  m <- array(sample(1:3, size = N*D, replace = TRUE), dim = c(N, D))
+if (!missing)
+  m <- array(3, dim = c(N, D))
 
 # Generate data
 y <- array(NA, dim = c(N, D))
+indiv_mu <- array(NA, dim = c(N, D, L + 1))
 for (i in 1:N) {
   for (j in 1:D) {
     mu_i <- mu[Z[i], j, ]
+
     l_not_available <- switch(m[i, j], `1` = 2, `2` = 1, `3` = NA)
-    if (!is.na(l_not_available)) mu_i[l_not_available] <- 0
+    if (!is.na(l_not_available)) mu_i[1 + l_not_available] <- 0
+
     y[i, j] <- sample(0:L, size = 1, prob = mu_i)
+    indiv_mu[i, j, ] <- mu_i
   }
 }
+
 
 # unique profiles
 unique_y <- as_tibble(data$y) %>%
@@ -87,7 +96,12 @@ params <- list(theta = theta,
                mu = mu,
                Z = Z)
 
-write_rds(data, "data/sim-data.Rds")
+if (missing)
+  write_rds(data, "data/sim-data_missing.Rds")
+
+if (!missing)
+  write_rds(data, "data/sim-data.Rds")
+
 write_rds(params, "data/sim-params.Rds")
 
 # check vanilla k means
