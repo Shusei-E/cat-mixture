@@ -24,7 +24,7 @@ excluding the top of the ticket as \(j \in \{1, ..., D\}\). The data we
 observe is a length-\(D\) vector of votes \(\bY_i\). \(Y_{ij}\) is a
 discrete response value, \(Y_{ij} \in \{0, ..., L\}\). 
 
-In the simplest case \(L = 1\), we code each vote \(Y_{ij}\) an indicator for splitting their ticket or not. \(Y_{ij} = 1\) would mean voter \(i\) splitting their ticket in some office \(j\), with reference to a top of the ticket office like the President or Governor. When \(L = 2\), we can consider three outcomes: abstention \(Y_{ij} = 0\), split \(Y_{ij} = 1\), or straight \(Y_{ij} = 2\).
+In the simplest case \(L = 1\), we code each vote \(Y_{ij}\) an indicator for splitting their ticket or not. \(Y_{ij} = 1\) would mean voter \(i\) splitting their ticket in some office \(j\), with reference to a top of the ticket office like the President or Governor. In the multinomial. case of \(L = 2\), which will be our default setting, we can consider three outcomes: abstention \(Y_{ij} = 0\), split \(Y_{ij} = 1\), or straight \(Y_{ij} = 2\).
 
 
 \paragraph{Parameters}
@@ -35,7 +35,7 @@ There are two sets of parameters: \(\bmu\), the propensity for a given outcome f
 Z_i \sim  \text{Cat}(\bth),
 \end{align*}
 
-Set \(\mu_{k, j} \in [0, 1]\) be the parameter that governs the outcome of each type. Therefore \(\bmu\) is a \(\{K \times D \times (L + 1)\}\) array, where 
+Set \(\mu_{kj\ell} \in [0, 1]\) be the probability parameter that governs the probability of a given outcome for a given office, by a given type of voter. That is, \(\bmu\) is a \(\{K \times D \times (L + 1)\}\) array, where 
  \[\pr{Y_{ij} = \ell \mid Z_i = k} = \mu_{kj\ell}.\]
 
 In other words, for each individual (who is  type \(k\)), their observed vector \(\bY_{i}\) is governed by a length-\(D\) parameter \(\bmu_{k}\). Therefore, we can express the joint density as follows. 
@@ -43,7 +43,7 @@ In other words, for each individual (who is  type \(k\)), their observed vector 
 \pr{\bY_{i} \mid Z_{i} = k, \bth} = \prod^{D}_{j = 1} \text{Cat}(Y_{ij} | \bmu_k) = \prod^{D}_{j = 1}\prod^{L}_{\ell=0} \mu_{kj\ell}^{\ind{Y_{ij} = \ell}}
 \end{align}
 
-The loop over \(\ell\) simply represents the categorical distribution. In the binary case, the Categorical reduces to a Bernoulli:
+The loop over \(\ell\) simply represents the categorical distribution. In the binary case of \(L = 1\), the Categorical reduces to a Bernoulli:
 
 \begin{align}
 \pr{\bY_{i} \mid Z_{i} = k, \bth} = \prod^{D}_{j=1}\mu_{kj}^{Y_{ij}}(1 - \mu_{kj})^{1- Y_{ij}}\nonumber
@@ -201,6 +201,12 @@ Now we add the clustering and individual indices back in for the real data, effe
 &\qquad +\sum^K_{k=1}\ind{Z_i = k, M_{ij}= 2}\frac{\exp{(\psi_{kj\ell})}}{\sum_{\ell^\prime \in \{0, 2\}}\exp{(\psi_{kj\ell^\prime})}}\nonumber \\
 &\qquad\qquad +\sum^K_{k=1}\ind{Z_i = k, M_{ij}= 3}\frac{\exp{(\psi_{kj\ell})}}{\sum_{\ell^\prime \in \{0, 1, 2\}}\exp{(\psi_{kj\ell^\prime})}}\label{eq:missing}
 \end{align}
+
+% \begin{align}
+% \mu_{kj\ell} &= \sum^K_{k=1}\ind{Z_i = k, M_{ij}= 1}\frac{\mu_{kj\ell}}{\sum_{\ell^\prime \in \{0, 1\}}\mu_{kj\ell^\prime}}\nonumber \\
+% &\qquad +\sum^K_{k=1}\ind{Z_i = k, M_{ij}= 2}\frac{\mu_{kj\ell}}{\sum_{\ell^\prime \in \{0, 2\}}\mu_{kj\ell^\prime}}\nonumber \\
+% &\qquad\qquad +\sum^K_{k=1}\ind{Z_i = k, M_{ij}= 3}\frac{\mu_{kj\ell}}{\sum_{\ell^\prime \in \{0, 1, 2\}} \mu_{kj\ell^\prime} }\label{eq:missing}
+% \end{align}
 
 
 \paragraph{Analog to Multinomial Logit} Because \(\exp(\psi_{kj\ell}) = 1\) for \(\ell = 0\), which exists in all three components, each component is analogous to a simple multinomial logit. In the first two cases, since we consider only two possibilities, it reduces to a simple intercept-only logit. Also notice that we use the same set of parameters \(\bps_{kj}\) regardless of \(M_{ij}\). This represents the well-known independence of irrelevant alternatives (IIA) assumption in multinomial logit. The choice probabilities when one option is not on the ``menu'' is assumed to follow the same type of decision rule as the ratio between the existing options.  
