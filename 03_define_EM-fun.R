@@ -14,10 +14,21 @@ expit <- function(x) 1/(1 + exp(-x))
 #'
 #' @param t iteration index
 #' @param obj the EM object with all iterations
+#' @param data the dataset with observed values
+#' @param fast logical, if the object was computed
+#'  by collpasing to profiles (TRUE) or not (FALSE)
+#'
+#'
 #' @return the log likelihood
 #'
-loglik_obs <- function(t, obj, data) {
+loglik_obs <- function(t, obj, data, fast) {
   loglik_obs <- c()
+
+  if (!fast) {
+    data$U <- data$N
+    data$n_u <- rep(1, data$N)
+    data$uy <- data$y
+  }
 
   theta_t <- obj[[t]]$theta
   mu_t <- obj[[t]]$mu
@@ -162,7 +173,7 @@ cat_mixture <- function(data, user_K = 3, n_iter = 100, fast = TRUE, IIA = FALSE
           mfit <- mlogit(y_chosen ~ 1, weights = zeta, mlogit_d)
 
           # rescale to probabilities
-          mfit_coefs_e <- exp(c(0, coef(mfit)[1:data$L]))
+          mfit_coefs_e <- exp(c(0, coef(mfit)))
           mu[k, j, ] <- mfit_coefs_e / sum(mfit_coefs_e)
         }
 
