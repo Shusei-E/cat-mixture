@@ -193,14 +193,21 @@ Of course, how much utility translates into vote choice is an empirical question
 &= \ind{M_{j}= 1}\frac{\exp{(\psi_{j\ell})}}{1 + \exp{(\psi_{j1})}} +\ind{M_{j}= 2}\frac{\exp{(\psi_{j\ell})}}{1 + \exp{(\psi_{j2})}} +\ind{M_{j}= 3}\frac{\exp{(\psi_{j\ell})}}{1 + \exp{(\psi_{j1})} + \exp{(\psi_{j2}})}\nonumber
 \end{align}
 
-Now we add the clustering and individual indices back in for the real data, effectively another layer to account for the fact that individuals are both of a type (\(Z_i\)) and each separate office is also of a missingness type \(M_{ij}\):
-
-
+Now we add the clustering and individual indices back in for the real data, effectively another layer to account for the fact that individuals are both of a type (\(Z_i\)) and each separate office is also of a missingness type \(M_{ij}\). 
 \begin{align}
-\mu_{kj\ell} &= \sum^K_{k=1}\ind{Z_i = k, M_{ij}= 1}\frac{\exp{(\psi_{kj\ell})}}{\sum_{\ell^\prime \in \{0, 1\}}\exp{(\psi_{kj\ell^\prime})}}\nonumber \\
-&\qquad +\sum^K_{k=1}\ind{Z_i = k, M_{ij}= 2}\frac{\exp{(\psi_{kj\ell})}}{\sum_{\ell^\prime \in \{0, 2\}}\exp{(\psi_{kj\ell^\prime})}}\nonumber \\
-&\qquad\qquad +\sum^K_{k=1}\ind{Z_i = k, M_{ij}= 3}\frac{\exp{(\psi_{kj\ell})}}{\sum_{\ell^\prime \in \{0, 1, 2\}}\exp{(\psi_{kj\ell^\prime})}}\label{eq:missing}
+\mu_{kj\ell} &= \sum^K_{k=1}\ind{Z_i = k, M_{ij}= m}\frac{\exp{(\psi_{kj\ell})}}{\sum_{\ell^\prime \in \bm{S}_{m}}\exp{(\psi_{kj\ell^\prime})}}\label{eq:missing}
 \end{align}
+
+For shorthand, in the above I use the shorthand \(\bm{S}_{M_{ij}}\) for the set of possible of values of \(Y_{ij}\) allowed for a given category of contestedness.
+\begin{align*}
+S_{m} = \begin{cases}
+\{0, 1\} & \text{~if~} m = 1\\
+\{0, 2\}  & \text{~if~} m = 2\\
+\{0, 1, 2\} & \text{~if~} m = 3\\
+\end{cases}
+\end{align*}
+
+
 
 % \begin{align}
 % \mu_{kj\ell} &= \sum^K_{k=1}\ind{Z_i = k, M_{ij}= 1}\frac{\mu_{kj\ell}}{\sum_{\ell^\prime \in \{0, 1\}}\mu_{kj\ell^\prime}}\nonumber \\
@@ -253,8 +260,9 @@ Where the \(\bm\psi_{kj}\) vector is estimated from the coefficients of a multin
 \paragraph{Evaluating Convergence} When following the EM algorithm on this data affected by uncontested choices, the observed log likelihood changes. Recall that in the no-missing case,  we have equation \ref{eq:obsloglik}. However, in cases of missingness, the contribution of a data point also depends on the contestedness class.
 
 \begin{align*}
-{\mathcal{L}}^{\star}_{\text{obs}} = \sum^{N}_{i=1}\log \left\{\sum^{K}_{k=1}\theta_k \prod^{D}_{j=1}\prod^{3}_{m = 1}\prod^{L}_{\ell = 0}\left(\mu_{kj\ell}\right)^{\ind{M_{ij} = m, Y_{ij} = \ell}}\right\}
+{\mathcal{L}}^{\star}_{\text{obs}} &= \sum^{N}_{i=1}\log \left\{\sum^{K}_{k=1}\theta_k \prod^{D}_{j=1}\prod^{L}_{\ell = 0}\left(\frac{\mu_{kj\ell}}{\sum_{\ell^\prime \in S_{M_{ij}}} \mu_{kj\ell^\prime}}\right)^{Y_{ij} = \ell}\right\}
 \end{align*}
+
 
 
 \end{document}

@@ -104,3 +104,9 @@ if (!missing)
 
 write_rds(params, "data/sim-params.Rds")
 
+cbind(Z = params$Z, data$y) %>%
+  as_tibble() %>%
+  group_by(Z) %>%
+  summarize_all(~mean(.x == 2))
+
+table(params$Z)
