@@ -260,7 +260,7 @@ Where the \(\bm\psi_{kj}\) vector is estimated from the coefficients of a multin
 \paragraph{Evaluating Convergence} When following the EM algorithm on this data affected by uncontested choices, the observed log likelihood changes. Recall that in the no-missing case,  we have equation \ref{eq:obsloglik}. However, in cases of missingness, the contribution of a data point also depends on the contestedness class.
 
 \begin{align*}
-{\mathcal{L}}^{\star}_{\text{obs}} &= \sum^{N}_{i=1}\log \left\{\sum^{K}_{k=1}\theta_k \prod^{D}_{j=1}\prod^{L}_{\ell = 0}\left(\frac{\mu_{kj\ell}}{\sum_{\ell^\prime \in S_{M_{ij}}} \mu_{kj\ell^\prime}}\right)^{Y_{ij} = \ell}\right\}
+{\mathcal{L}}^{\star}_{\text{obs}} &= \sum^{N}_{i=1}\log \left[\sum^{K}_{k=1}\theta_k \prod^{D}_{j=1}\prod_{\ell \in S_{M_{ij}}}\left\{\left(\frac{\mu_{kj\ell}}{\sum_{\ell^\prime \in S_{M_{ij}}} \mu_{kj\ell^\prime}}\right)^{\ind{Y_{ij} = \ell}}\right\}\right]
 \end{align*}
 
 

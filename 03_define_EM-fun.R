@@ -21,8 +21,10 @@ expit <- function(x) 1/(1 + exp(-x))
 #'
 #' @return the log likelihood
 #'
-loglik_obs <- function(t, obj, data, fast) {
+loglik_obs <- function(t, obj, data, fast = TRUE, IIA = FALSE) {
   loglik_obs <- c()
+
+  if (IIA) fast <- FALSE
 
   if (!fast) {
     data$U <- data$N
@@ -36,12 +38,27 @@ loglik_obs <- function(t, obj, data, fast) {
 
   # for each N
   for (u in 1:data$U) {
-    resp_i <- c()
+    resp_i = c()
     for (k in 1:user_K) {
-      resp_i[k] = foreach(j = 1:data$D, .combine = "*") %:%
-        foreach(l = 0:(data$L), .combine = "*") %do% {
-          (mu_t[k, j, (l + 1)])^(data$uy[u, j] == l)
+      # if not IIA, then follow original
+      if (!IIA) {
+        resp_i[k] = foreach(j = 1:data$D, .combine = "*") %:%
+          foreach(l = 0:(data$L), .combine = "*") %do% {
+            (mu_t[k, j, (l + 1)])^(data$uy[u, j] == l)
+          }
+      }
+      # recale if IIA
+      if (IIA) {
+        resp_i_k = c()
+        for (j in 1:data$D) {
+          S = switch(data$m[u, j], `1` = c(0, 1), `2` = c(0, 2), `3` = c(0, 1, 2))
+          sum_mu = sum(mu_t[k, j, S + 1])
+          resp_i_k[j] = foreach(l = S, .combine = "*") %do% {
+            (mu_t[k, j, (l + 1)] / sum_mu)^(data$uy[u, j] == l)
+          }
         }
+        resp_i[k] = prod(resp_i_k)
+      }
     }
     loglik_obs[u] <- data$n_u[u] * log(theta_t %*% resp_i)
   }
@@ -55,7 +72,7 @@ loglik_obs <- function(t, obj, data, fast) {
 #' @param obj the EM object with all iterations
 #'
 #' @return A tibble
-vector_params <- function(t, loglik = FALSE, obj, data) {
+vector_params <- function(t, loglik = FALSE, obj, data, IIA = FALSE) {
   theta_vector <- obj[[t]]$theta
   mu_vector    <- obj[[t]]$mu[, , (1:(data$L + 1))]
 
@@ -68,7 +85,7 @@ vector_params <- function(t, loglik = FALSE, obj, data) {
   df_i <- tibble(param_id = c(theta_names, mu_names),
                  values = c(theta_vector, mu_vector)
   )
-  if (loglik) df_i$loglik_obs <- loglik_obs(t, obj, data)
+  if (loglik) df_i$loglik_obs <- loglik_obs(t, obj, data, IIA = IIA)
   return(df_i)
 }
 
@@ -76,6 +93,9 @@ vector_params <- function(t, loglik = FALSE, obj, data) {
 #' Compute EM
 cat_mixture <- function(data, user_K = 3, n_iter = 100, fast = TRUE, IIA = FALSE,
                         theta = NULL, mu = NULL, zeta_hat  = NULL) {
+
+  # cannot handle groupings in IIA case
+  if (IIA) fast <- FALSE
 
   # Unique profile and speed up? ----
   if (!fast) {
@@ -193,7 +213,7 @@ cat_mixture <- function(data, user_K = 3, n_iter = 100, fast = TRUE, IIA = FALSE
     }
 
     # store each iter
-    store_iter[[iter]] = list(mu = mu, theta = theta, zeta = zeta_hat)
+    store_iter[[iter]] = list(mu = mu, theta = theta, zeta = zeta_hat, fast = fast, IIA = IIA)
     cat(glue("iter: {iter}"), "\n")
 
     iter = iter + 1
@@ -205,10 +225,10 @@ cat_mixture <- function(data, user_K = 3, n_iter = 100, fast = TRUE, IIA = FALSE
 # Summarize ----
 
 # stack all pre-post comparisons
-summ_params <- function(store_iter, data, calc_loglik = TRUE) {
+summ_params <- function(store_iter, data, calc_loglik = TRUE, IIA = FALSE) {
   foreach(t = 2:length(store_iter), .combine = "bind_rows") %do% {
-    params_t       <- vector_params(t, loglik = calc_loglik, store_iter, data)
-    params_tminus1 <- vector_params(t - 1, loglik = FALSE, store_iter, data)
+    params_t       <- vector_params(t, loglik = calc_loglik, store_iter, data, IIA = IIA)
+    params_tminus1 <- vector_params(t - 1, loglik = FALSE, store_iter, data, IIA = IIA)
 
     left_join(params_tminus1, params_t,
               by = c("param_id"),
