@@ -79,7 +79,7 @@ vector_params <- function(t, loglik = FALSE, obj, data, IIA = FALSE) {
   user_K <- length(theta_vector)
   theta_names <- str_c("theta_", 1:user_K)
   mu_names    <- str_c(str_c(str_c("mu_", 1:user_K, "_"),
-                       rep(1:data$D, each = user_K), "_"),
+                             rep(1:data$D, each = user_K), "_"),
                        rep(0:data$L, each = user_K*data$D))
 
   df_i <- tibble(param_id = c(theta_names, mu_names),
@@ -156,16 +156,17 @@ cat_mixture <- function(data, user_K = 3, n_iter = 100, fast = TRUE, IIA = FALSE
           stopifnot(data$L == 2)
           resp_u_k <- c()
           for (j in 1:data$D) {
-            m = data$m[i, j]
+            m = data$m[u, j]
             S_m = switch(m, `1` = c(0, 1), `2` = c(0, 2), `3` = c(0, 1, 2))
             sum_mu = sum(mu[k, j, (S_m + 1)])
 
             resp_u_k[j] <- foreach(l = S_m, .combine = "*") %do% {
-              (mu[k, j, (S_m + 1)] / sum_mu)^(data$uy[u, j] == l)
+              (mu[k, j, (l + 1)] / sum_mu)^(data$uy[u, j] == l)
             }
           }
           resp_u[k] = prod(resp_u_k)
         }
+      }
 
       numer_u = theta * resp_u # K x 1
       denom_u_k = sum(theta %*% resp_u) # scalar
