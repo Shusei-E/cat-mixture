@@ -273,22 +273,24 @@ so to optimize we introduce Langrange multipliers \(\lambda\) and \(\bm{\eta}\) 
 \begin{align}
 \widetilde{\mathcal{L}} = \E{\mathcal{L}_\text{comp}} - \lambda\left(\sum^{K}_{k=1}\bth_k - 1\right) - \sum^{K}_{k=1}\sum^{D}_{j=1}\eta_{kj}\left(\sum^{L}_{\ell=0}\mu_{kj\ell} - 1\right)\label{eq:lagrange_a}
 \end{align}
-
 Then, for \(\bth\) we have that
 \begin{align*}
 \frac{\partial}{\partial {\theta}_{k}}\widetilde{\mathcal{L}}
 &= \frac{\sum^{N}_{i=1}\zeta_{ik}}{\bm{\theta}_{k}} - \lambda  = 0
 \end{align*}
-and for \(\bmu_{kj}\) we have that
+along with the constraint \(\sum^K_{k=1}\theta_k = 1\). Notice that when we sum the FOC for \(\bth\) across \(k\), the first condition becomes \(\sum^K_{k=1}\theta_k = \frac{1}{\lambda}\sum^K_{k = 1}\sum^N_{i=i}\zeta_{ik}\), and because the LHS sums to 1 due to the constraint and in the RHS  \(\sum^{N}_{i=1}\sum^{K}_{k^\prime =1}\zeta_{ik^\prime}\) sums to \(N\), we have \(\lambda = N\). 
+
+\medskip
+
+Separately, for \(\bmu_{kj}\) we have that
 \begin{align*}
 \frac{\partial}{\partial {\mu}_{kj\ell}}\widetilde{\mathcal{L}}
 &= \frac{\sum^{N}_{i=1}\ind{Y_{ij} = \ell}\zeta_{ik}}{\bm{\mu}_{kj\ell}} - \eta_{kj}  = 0,
 \end{align*}
-along with the constraints \(\sum^K_{k=1}\theta_k = 1\) and \(\sum^L_{\ell = 0} \mu_{kj\ell} = 1\).
+along with constraint \(\sum^L_{\ell = 0} \mu_{kj\ell} = 1\). Once we sum the FOC for \(\bmu\) across \(\ell\) the first condition becomes  \(\sum^L_{\ell=0} \mu_{kj\ell} = \frac{1}{\eta_{kj}}\sum_{i=1}\sum_{\ell=0}\ind{Y_{ij} = \ell}\zeta_{ik}\), and because the LHS again sums to 1 and in the RHS   \(\sum^{N}_{i=1}\sum^{L}_{\ell = 0}\ind{Y_{ij} = \ell}\zeta_{ik}\) sums to the prevalence of the weights \(\sum^{N}_{i=1}\zeta_{ik}\), we get \(\eta_{kj}= \sum^{N}_{i=1}\zeta_{ik}\).
+\medskip
 
-Notice that when we sum the FOC for \(\bth\) across \(k\), the first condition becomes \(\sum^K_{k=1}\theta_k = \frac{1}{\lambda}\sum^K_{k = 1}\sum^N_{i=i}\zeta_{ik}\), and because the LHS sums to 1 due to the constraint and in the RHS  \(\sum^{N}_{i=1}\sum^{K}_{k^\prime =1}\zeta_{ik^\prime}\) sums to \(N\), we have \(\lambda = N\). Similarly, once we sum the FOC for \(\bmu\) across \(\ell\) the first condition becomes  \(\sum^L_{\ell=0} \mu_{kj\ell} = \frac{1}{\eta_{kj}}\sum_{i=1}\sum_{\ell=0}\ind{Y_{ij} = \ell}\zeta_{ik}\), and because the LHS again sums to 1 and in the RHS   \(\sum^{N}_{i=1}\sum^{L}_{\ell = 0}\ind{Y_{ij} = \ell}\zeta_{ik}\) sums to the prevalence of the weights \(\sum^{N}_{i=1}\zeta_{ik}\), we get \(\eta_{kj}= \sum^{N}_{i=1}\zeta_{ik}\).
-
-Al above implies that
+Together, the above imply that
 \begin{equation}
 \bm{\theta}_{k} = \frac{1}{N}\sum^{N}_{i=1}\zeta_{ik}\quad
 \text{and}\quad
