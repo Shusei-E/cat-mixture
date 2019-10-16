@@ -213,7 +213,8 @@ cat_mixture <- function(data, user_K = 3, n_iter = 100, fast = TRUE, IIA = FALSE
     }
 
     # store each iter
-    store_iter[[iter]] = list(mu = mu, theta = theta, zeta = zeta_hat, fast = fast, IIA = IIA)
+    opts <- list(fast = fast, IIA = IIA, N = data$N, D = data$D)
+    store_iter[[iter]] = list(mu = mu, theta = theta, zeta = zeta_hat, opts = opts)
     cat(glue("iter: {iter}"), "\n")
 
     iter = iter + 1
