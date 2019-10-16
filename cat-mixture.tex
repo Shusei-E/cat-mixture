@@ -271,7 +271,7 @@ Recall that the expectation of the likelihood from equation \ref{eq:Elik} is
 \end{align*}
 so to optimize we introduce Langrange multipliers \(\lambda\) and \(\bm{\eta}\) for the constraints on \(\bth\) and \(\bmu_{kj}\), respectively:
 \begin{align}
-\widetilde{\mathcal{L}} = \E{\mathcal{L}_\text{comp}} - \lambda\left(\sum^{K}_{k=1}\bth_k - 1\right) - \sum^{K}_{k=1}\sum^{D}_{j=1}\eta_{kj}\left(\sum^{L}_{\ell=0}\mu_{kj\ell} - 1\right)
+\widetilde{\mathcal{L}} = \E{\mathcal{L}_\text{comp}} - \lambda\left(\sum^{K}_{k=1}\bth_k - 1\right) - \sum^{K}_{k=1}\sum^{D}_{j=1}\eta_{kj}\left(\sum^{L}_{\ell=0}\mu_{kj\ell} - 1\right)\label{eq:lagrange_a}
 \end{align}
 
 Then, for \(\bth\) we have that
@@ -322,14 +322,13 @@ And the expected log likelihood, taking expectations over \(Z_i\) is
 \begin{align}
 \widehat{\zeta}_{ik} \propto \theta_k\prod^{D}_{j = 1}\underbrace{\prod^{L}_{\ell \in S_m}\left(\frac{\mu_{kj\ell}}{\sum_{\ell^\prime \in S_{m}} \mu_{kj\ell^\prime}}\right)^{\ind{Y_{ij} = \ell}}}_{\equiv \bmu_{kj, Y_{ij}, M_{ij}}}
 \end{align}
-
 So in the E-step, we would be updating by this probability:
 \begin{align}
 \zeta_{ik} \leftarrow \frac{\bm{\theta}_{k}\prod^{D}_{j=1}\bm{\mu}_{kj,Y_{ij}, M_{ij}}}
 {\sum^{K}_{k^\prime=1}\bm{\theta}_{k^\prime}\prod^{D}_{j=1}\bm{\mu}_{k^\prime j,Y_{ij}, M_{ij}}}
 \end{align}
 
-\paragraph{M-step}  The M-step involves taking the derivative of one more layer of complication. Re-using the notation,  we introduce Langrange multipliers \(\lambda\) and \(\bm{\eta}\) for the constraints on \(\bth\) and \(\bmu_{kj}\), respectively:
+\paragraph{M-step}  The M-step involves taking the derivative of one more layer of complication. Re-using notation we introduce Langrange multipliers \(\lambda\) and \(\bm{\eta}\) for the constraints on \(\bth\) and \(\bmu_{kj}\), respectively and modify eq. \ref{eq:lagrange_a}
 
 \begin{align}
 \widetilde{\mathcal{L}} = \E{\mathcal{L}_\text{comp}} - \lambda\left(\sum^{K}_{k=1}\bth_k - 1\right) - \sum^{K}_{k=1}\sum^{D}_{j=1}\eta_{kj}\left(\sum_{\ell \in S_{m}}\left(\frac{\mu_{kj\ell}}{\sum_{\ell^\prime \in S_{m}} \mu_{kj\ell^\prime}}\right) - 1\right) \nonumber
