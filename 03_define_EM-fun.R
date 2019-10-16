@@ -144,12 +144,28 @@ cat_mixture <- function(data, user_K = 3, n_iter = 100, fast = TRUE, IIA = FALSE
       resp_u = rep(NA, user_K)
 
       for (k in 1:user_K) {
-        # zeta_{ik} = theta_{k}prod^{D}_{j=1}prod^{L}_{l=0})(mu[k, j, (l + 1)]^(y[i, j] == l))
-        resp_u[k] = foreach(j = 1:data$D, .combine = "*") %:%
-          foreach(l = 0:(data$L), .combine = "*") %do% {
-            (mu[k, j, (l + 1)])^(data$uy[u, j] == l)
+        if (!IIA) {
+          # zeta_{ik} = theta_{k}prod^{D}_{j=1}prod^{L}_{l=0})(mu[k, j, (l + 1)]^(y[i, j] == l))
+          resp_u[k] = foreach(j = 1:data$D, .combine = "*") %:%
+            foreach(l = 0:(data$L), .combine = "*") %do% {
+              (mu[k, j, (l + 1)])^(data$uy[u, j] == l)
+            }
+        }
+
+        if (IIA) {
+          stopifnot(data$L == 2)
+          resp_u_k <- c()
+          for (j in 1:data$D) {
+            m = data$m[i, j]
+            S_m = switch(m, `1` = c(0, 1), `2` = c(0, 2), `3` = c(0, 1, 2))
+            sum_mu = sum(mu[k, j, (S_m + 1)])
+
+            resp_u_k[j] <- foreach(l = S_m, .combine = "*") %do% {
+              (mu[k, j, (S_m + 1)] / sum_mu)^(data$uy[u, j] == l)
+            }
           }
-      }
+          resp_u[k] = prod(resp_u_k)
+        }
 
       numer_u = theta * resp_u # K x 1
       denom_u_k = sum(theta %*% resp_u) # scalar
