@@ -138,7 +138,7 @@ cat_mixture <- function(data, user_K = 3, n_iter = 100, fast = TRUE, IIA = FALSE
 
   # start EM loop ------
   while (iter <= n_iter) {
-    # E step
+    ## E step ----
     for (u in 1:data$U) {
       # responsibility of type k
       resp_u = rep(NA, user_K)
@@ -158,8 +158,7 @@ cat_mixture <- function(data, user_K = 3, n_iter = 100, fast = TRUE, IIA = FALSE
       zeta_hat[u, ] = zeta_u
     }
 
-    # M step
-
+    # M step ----
     for (k in 1:user_K) {
       sum_zeta_k = data$n_u %*% zeta_hat[, k]
 
@@ -170,6 +169,20 @@ cat_mixture <- function(data, user_K = 3, n_iter = 100, fast = TRUE, IIA = FALSE
 
       # update mu
       for (j in 1:data$D) {
+
+        # default
+        if (!IIA) {
+          for (l in data$L:1) {
+            # 1(Y_{ij} = ell)
+            y_matches_l = (data$uy[, j] == l)
+
+            # update mu
+            mu[k, j, (l + 1)]  = sum(data$n_u * y_matches_l * zeta_hat[, k]) /
+              sum_zeta_k
+          }
+          # last category is 1 minus the rest
+          mu[k, j, (0 + 1)] =  1 - sum(mu[k, j, ((data$L:1) + 1)])
+        }
 
         # IIA model
         if (IIA) {
@@ -195,19 +208,6 @@ cat_mixture <- function(data, user_K = 3, n_iter = 100, fast = TRUE, IIA = FALSE
           # rescale to probabilities
           mfit_coefs_e <- exp(c(0, coef(mfit)))
           mu[k, j, ] <- mfit_coefs_e / sum(mfit_coefs_e)
-        }
-
-        if (!IIA) {
-          for (l in data$L:1) {
-            # 1(Y_{ij} = ell)
-            y_matches_l = (data$uy[, j] == l)
-
-            # update mu
-            mu[k, j, (l + 1)]  = sum(data$n_u * y_matches_l * zeta_hat[, k]) /
-              sum_zeta_k
-          }
-          # last category is 1 minus the rest
-          mu[k, j, (0 + 1)] =  1 - sum(mu[k, j, ((data$L:1) + 1)])
         }
       }
     }
