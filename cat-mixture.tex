@@ -24,7 +24,7 @@ excluding the top of the ticket as \(j \in \{1, ..., D\}\). The data we
 observe is a length-\(D\) vector of votes \(\bY_i\). \(Y_{ij}\) is a
 discrete response value, \(Y_{ij} \in \{0, ..., L\}\). 
 
-In the simplest case \(L = 1\), we code each vote \(Y_{ij}\) an indicator for splitting their ticket or not. \(Y_{ij} = 1\) would mean voter \(i\) splitting their ticket in some office \(j\), with reference to a top of the ticket office like the President or Governor. In the multinomial. case of \(L = 2\), which will be our default setting, we can consider three outcomes: abstention \(Y_{ij} = 0\), split \(Y_{ij} = 1\), or straight \(Y_{ij} = 2\).
+In the simplest case \(L = 1\), we code each vote \(Y_{ij}\) an indicator for splitting their ticket or not. \(Y_{ij} = 1\) would mean voter \(i\) splitting their ticket in some office \(j\), with reference to a top of the ticket office like the President or Governor. In the multinomial. case of \(L = 2\), which will be our default setting, we can consider three outcomes: \(Y_{ij} = 0\) indicates \emph{abstention}, \(Y_{ij} = 1\) indicates ticket \emph{splitting} and \(Y_{ij} = 2\) indicates \emph{straight} (co-party) voting.  
 
 
 \paragraph{Parameters}
@@ -42,27 +42,21 @@ In other words, for each individual (who is  type \(k\)), their observed vector 
 \begin{align}
 \pr{\bY_{i} \mid Z_{i} = k, \bth} = \prod^{D}_{j = 1} \text{Cat}(Y_{ij} | \bmu_k) = \prod^{D}_{j = 1}\prod^{L}_{\ell=0} \mu_{kj\ell}^{\ind{Y_{ij} = \ell}}
 \end{align}
-
 The loop over \(\ell\) simply represents the categorical distribution. In the binary case of \(L = 1\), the Categorical reduces to a Bernoulli:
-
 \begin{align}
 \pr{\bY_{i} \mid Z_{i} = k, \bth} = \prod^{D}_{j=1}\mu_{kj}^{Y_{ij}}(1 - \mu_{kj})^{1- Y_{ij}}\nonumber
 \end{align}
 
-
-
-
 The benefit of this modeling exercise over that from a naive sample of
 \(N \times D\) Bernoullis is that we have captured the correlations
-between variables.\footnote{That dependency can be expressed as \(\mathds{E}(\by) = \sum_{k = 1}^{K} \theta_{k} \bmu_{k}\) and 
-\(\cov({\by}) = \sum_{k} \theta_{k} (\mathbf{\Sigma}_k \bmu_k\bmu_{k}^{\top}) - \mathds{E}(\by)\mathds{E}(\by)^\top\), where \(\Sigma_k = \text{diag}(\mu_{kj}(1 - \mu_{kj}))\).}
+between variables.
 
 
 \section{Clustering as an Unobserved Variable Problem: EM}
 
-This mixture model lends itself to clustering analysis such as \(K\)-means. Although we can estimate this model in a Bayesian fashion by setting a prior for \(\bth\) and \(\bmu\), the \textsf{Stan} program cannot reliably estimate clustering models like this one by MCMC because of label-switching and multimodality. 
+This mixture model lends itself to clustering analysis such as \(K\)-means clustering. Although we can estimate this model in a Bayesian fashion by setting a prior for \(\bth\) and \(\bmu\), the MCMC sampler Stan cannot reliably estimate clustering models like this one because of label-switching and multimodality. 
 
-Because the model is simple enough, we can derive an algorithm to obtain the global solution for the parameters.\footnote{Thanks to Soichiro Yamauchi for deriving this algorithm in the original iteration.} Compared to off-the-shelf algorithms like K-means clustering, an EM approach can handle extensions such as discrete and unordered multinomial outcomes, systematic missing data, and covariates. 
+Instead, we can derive the EM algorithm that is guarateed to recover the (local) maximum likelihood estimates for the target parameters. Unlike off-the-shelf algorithms like \(K\)-means, an EM approach can handle extensions such as discrete and unordered multinomial outcomes, systematic missing data, and covariates. The rest of this paper outlines the EM algorithm.\footnote{Thanks to Soichiro Yamauchi for deriving the original iteration of this algorithm for me.}
 
 \paragraph{Complete Likelihood} If we knew the cluster assignment, we would be able to write the complete log-likelihood (\(\mathcal{L}_{\text{comp}}\)). First start with the joint probability of the outcome data and the cluster assignment:
 \begin{align}
@@ -106,35 +100,29 @@ The M-step is derived by taking the derivatives of \(\E{\mathcal{L}_{\text{comp}
 \paragraph{EM Implementation} We first need to set initial values for \(\bmu\) and \(\bth\). I do this by letting \(\bth^{(0)} = \left(\frac{1}{K},...\frac{1}{K}\right)\), randomly assigning an initial cluster assignment \(Z_i^\prime \sim \text{Cat}(\bth^{(0)})\), and setting the initial \(\bmu\) by the sample means of the data within those initial assignments, \(\mu_{kj}^{(0)} = \frac{\sum_{i=1}^{N}\ind{Y_{ij} = 1}\ind{Z_{i}^{\prime} = k}}{\sum_{i=1}^{N}\ind{Z_{i}^{\prime} = k}}.\) 
 
 Then we iterate as follows. For each voter \(i\), compute the probability that they belong in cluster \(k\) (E-step):
-
 \begin{align}
 \zeta_{ik} \leftarrow \frac{\bm{\theta}_{k}\prod^{D}_{j=1}\bm{\mu}_{kj,Y_{ij}}}
 {\sum^{K}_{k^\prime=1}\bm{\theta}_{k^\prime}\prod^{D}_{j=1}\bm{\mu}_{k^\prime j,Y_{ij}}}
 \end{align}
 
-Then given those type probabilities, we update the parameters in the M-step. We can show from a Lagrangian maximization problem that the new parameters are MLEs (see appendix). 
-
-That will show that for updating \(\theta_k\), we should take the simple average of \(\widehat\zeta_{ik}\) across all \(i\). For updating \(\widehat\mu_{kj\ell}\), we should take for each \(k\) and \(\ell\) the sample proportion of the occurrence of \(Y_{ij} = \ell\), but weighted by \(\widehat\zeta_{ik}\):
+Given those type probabilities, we update the parameters in the M-step. That will show that for updating \(\theta_k\), we should take the simple average of \(\widehat\zeta_{ik}\) across all \(i\). For updating \(\widehat\mu_{kj\ell}\), we should take for each \(k\) and \(\ell\) the sample proportion of the occurrence of \(Y_{ij} = \ell\), but weighted by \(\widehat\zeta_{ik}\):
 \begin{align}
 \text{for each \(k\), update: }~~~  \widehat{\theta}_{k} &\leftarrow \frac{1}{N}\sum^N_{i = 1}\widehat{\zeta}_{ik} \\
-\text{for each \(k, j, \ell\), update: }~~~ \widehat{\mu}_{kj\ell} &\leftarrow\frac{\sum^N_{i=1}\ind{Y_{ij} = \ell}\widehat{\zeta}_{ik}}{\sum^{N}_{i=1}\widehat{\zeta}_{ik}}
+\text{for each \(k, j, \ell\), update: }~~~ \widehat{\mu}_{kj\ell} &\leftarrow\frac{\sum^N_{i=1}\ind{Y_{ij} = \ell}\widehat{\zeta}_{ik}}{\sum^{N}_{i=1}\widehat{\zeta}_{ik}},
 \end{align}
-
-
-We repeat this until convergence. 
+repeated  until convergence.
 
 \paragraph{Evaluating Convergence} We evaluate convergence by the observed log likelihood, 
 
 \begin{align*}
 \mathbf{L}_{\text{obs}} = \prod^N_{i=1}\sum^{K}_{k=1}\theta_k \prod^{D}_{j=1}\bm{\mu}_{kj,Y_{ij}}
 \end{align*}
-
-So the log-likelihood is
+So the observed log-likelihood is
 \begin{align}
 \mathcal{L}_{\text{obs}} = \sum^{N}_{i=1}\log \left\{\sum^{K}_{k=1}\theta_k \prod^{D}_{j=1}\bm{\mu}_{kj,Y_{ij}}\right\} = \sum^{N}_{i=1}\log \left\{\sum^{K}_{k=1}\theta_k \prod^{D}_{j=1}\prod^{L}_{\ell = 0}\left(\mu_{kj\ell}\right)^{\ind{Y_{ij} = \ell}}\right\} \label{eq:obsloglik}
 \end{align}
 
-Calculating eq. (\ref{eq:obsloglik}) is computationally intensive, so a quick way to check convergence is to track the maximum of the change in parameters which are all on the probability scale, i.e. \(\max\left\{|\widehat\theta^{(t + 1)}_{1} - \widehat\theta^{(t)}_{1}|, ..., |\widehat\mu^{(t + 1)}_{K,D} - \widehat\mu^{(t)}_{K,D}|\right\}\)
+Calculating eq. \ref{eq:obsloglik} is computationally intensive, so a quick way to check convergence is to track the maximum of the change in parameters which are all on the probability scale, i.e. \(\max\left\{|\widehat\theta^{(t + 1)}_{1} - \widehat\theta^{(t)}_{1}|, ..., |\widehat\mu^{(t + 1)}_{K,D} - \widehat\mu^{(t)}_{K,D}|\right\}\)
 
 \paragraph{Speed-Ups} Because this EM algorithm deals with discrete data, the algorithm needs only sufficient statistics. In our setting the unique number of voting profiles is much smaller than the number of observations, because vote vectors follow a systematic pattern and most votes are straight-ticket votes. Therefore, we can re-format the dataset so that each row is a unique combination.
 
@@ -162,13 +150,11 @@ And the observed log-likelihood will also only require looping through the profi
 
 \section{Modeling Uncontested Races} 
 
-A majority of elections for state and local offices are uncontested, which means that a voter technically votes in a choice but does not have the option to vote for one of the candidates. These qualitatively different settings call for another layer of modeling. 
-
-This setup uses the trichotomous outcome \(\ell \in \{0, 1,  2\}\) where \(Y_{ij} = 0\) indicates \emph{abstention}, \(Y_{ij} = 1\) indicates ticket \emph{splitting} (appearing like they are voting for their less preferred party as expressed in the top of the ticket) and \(Y_{ij} = 2\) indicates \emph{straight} (co-party) voting.  
+A majority of elections for state and local offices are uncontested, which means that a voter technically votes in a choice but does not have the option to vote for one of the candidates. These qualitatively different settings require us to model \emph{varying choice sets}. 
 
 \paragraph{Categories of uncontestedness} In uncontested races, some options are not available to choose from. To show this, we introduce a new layer: voter \(i\) for a given office \(j\) is in one of three settings, denoted by \(M_{ij} \in \{1, 2, 3\}\). Unlike the cluster \(Z_i\), that status is exactly observed in the data. 
 
-Denote \(M_{ij} = 3\) to mean vote \(j\) for voter \(i\) falls in the \emph{contested} case, so the voter has all three options on the menu. Denote \(M_{ij} = 2\) as the case when only the \emph{preferred party's} candidate is in the contest, so the voter only has options \(Y_{ij} \in \{0, 2\}\). Finally denote \(M_{ij} = 1\) as the case when only the \emph{opposed party's} candidate is in the contest, so the voter only has the option to abstain or ``reluctantly'' vote for the less favored option by splitting: \(Y_{i} \in \{0, 1\}\). For shorthand, I use the shorthand \(\bm{S}_{m}\) for the set of possible of values of \(Y_{ij}\) allowed for a given category of contestedness:
+Denote \(M_{ij} = 3\) to mean vote \(j\) for voter \(i\) falls in the \emph{contested} case, so the voter has all three options on the ``menu''. Denote \(M_{ij} = 2\) as the case when only the \emph{preferred party's} candidate is in the contest, so the voter only has options \(Y_{ij} \in \{0, 2\}\). Finally denote \(M_{ij} = 1\) as the case when only the \emph{opposed party's} candidate is in the contest, so the voter only has the option to abstain or reluctantly (perhaps) vote for the less favored option by splitting: \(Y_{i} \in \{0, 1\}\). For shorthand, I use the notation \(\bm{S}_{m}\) for the set of possible of values of \(Y_{ij}\) allowed for a given category of contestedness:
 \begin{align*}
 S_{m} = \begin{cases}
 \{0, 1\} & \text{~if~} m = 1\\
@@ -276,7 +262,7 @@ so to optimize we introduce Langrange multipliers \(\lambda\) and \(\bm{\eta}\) 
 Then, for \(\bth\) we have that
 \begin{align*}
 \frac{\partial}{\partial {\theta}_{k}}\widetilde{\mathcal{L}}
-&= \frac{\sum^{N}_{i=1}\zeta_{ik}}{\bm{\theta}_{k}} - \lambda  = 0
+&= \frac{\sum^{N}_{i=1}\zeta_{ik}}{{\theta}_{k}} - \lambda  = 0
 \end{align*}
 along with the constraint \(\sum^K_{k=1}\theta_k = 1\). Notice that when we sum the FOC for \(\bth\) across \(k\), the first condition becomes \(\sum^K_{k=1}\theta_k = \frac{1}{\lambda}\sum^K_{k = 1}\sum^N_{i=i}\zeta_{ik}\), and because the LHS sums to 1 due to the constraint and in the RHS  \(\sum^{N}_{i=1}\sum^{K}_{k^\prime =1}\zeta_{ik^\prime}\) sums to \(N\), we have \(\lambda = N\). 
 
@@ -292,9 +278,9 @@ along with constraint \(\sum^L_{\ell = 0} \mu_{kj\ell} = 1\). Once we sum the FO
 
 Together, the above imply that
 \begin{equation}
-\bm{\theta}_{k} = \frac{1}{N}\sum^{N}_{i=1}\zeta_{ik}\quad
+\theta_{k} = \frac{1}{N}\sum^{N}_{i=1}\zeta_{ik}\quad
 \text{and}\quad
-\bm{\mu}_{kj\ell} =
+\mu_{kj\ell} =
 \frac{\sum^{N}_{i=1}\bm{1}\{Y_{ij} = \ell\}\zeta_{ik}}{\sum^{N}_{i=1}\zeta_{ik}}
 \end{equation}
 
