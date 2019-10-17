@@ -139,6 +139,7 @@ cat_mixture <- function(data, user_K = 3, n_iter = 100, fast = TRUE, IIA = FALSE
   # start EM loop ------
   while (iter <= n_iter) {
     ## E step ----
+    t_e_start <- Sys.time()
     for (u in 1:data$U) {
       # responsibility of type k
       resp_u = rep(NA, user_K)
@@ -174,8 +175,10 @@ cat_mixture <- function(data, user_K = 3, n_iter = 100, fast = TRUE, IIA = FALSE
       zeta_u = numer_u / denom_u_k # K x 1
       zeta_hat[u, ] = zeta_u
     }
+    t_e_end <- Sys.time()
 
     # M step ----
+    t_m_start <- Sys.time()
     for (k in 1:user_K) {
       sum_zeta_k = data$n_u %*% zeta_hat[, k]
 
@@ -228,9 +231,15 @@ cat_mixture <- function(data, user_K = 3, n_iter = 100, fast = TRUE, IIA = FALSE
         }
       }
     }
+    t_m_end <- Sys.time()
 
     # store each iter
-    opts <- list(fast = fast, IIA = IIA, N = data$N, D = data$D)
+    opts <- list(fast = fast,
+                 IIA = IIA,
+                 N = data$N,
+                 D = data$D,
+                 time_e = difftime(t_e_end - t_e_start),
+                 time_m = difftime(t_m_end - t_m_start))
     store_iter[[iter]] = list(mu = mu, theta = theta, zeta = zeta_hat, opts = opts)
     cat(glue("iter: {iter}"), "\n")
 
