@@ -121,7 +121,6 @@ cat_mixture <- function(data, user_K = 3, n_iter = 100, fast = TRUE, IIA = FALSE
     switcher <- 1:user_K
     names(switcher) <- c_order
 
-    k_mu <- k_init$centers[c_order, ]
     k_cl <- dplyr::recode(k_init$cluster, !!!switcher)
 
     # initialize theta {K x 1}
@@ -135,6 +134,14 @@ cat_mixture <- function(data, user_K = 3, n_iter = 100, fast = TRUE, IIA = FALSE
     for (l in 0:data$L) {
       mu_vector <- flatten_dbl(map(1:user_K, ~colMeans(data$y[init_Z == .x, ] == l)))
       init_mu[, , l + 1] = matrix(mu_vector, nrow = user_K, byrow = TRUE)
+    }
+
+    # correct so that no cell is exactly zero
+    for (j in 1:data$D) {
+      for (k in 1:user_K) {
+        if (any(init_mu[k, j, ] < 1e-5))
+          init_mu[k, j, ] = (init_mu[k, j, ]  + 0.05) /  sum((init_mu[k, j, ]  + 0.05))
+      }
     }
 
     # container for theta
