@@ -92,6 +92,7 @@ vector_params <- function(t, loglik = FALSE, obj, data, IIA = FALSE) {
 
 #' Compute EM
 cat_mixture <- function(data, user_K = 3, n_iter = 100, fast = TRUE, IIA = FALSE,
+                        init = c("kmeans", "equal"),
                         theta = NULL, mu = NULL, zeta_hat  = NULL) {
 
   # cannot handle groupings in IIA case
@@ -108,6 +109,7 @@ cat_mixture <- function(data, user_K = 3, n_iter = 100, fast = TRUE, IIA = FALSE
   # unless all values are given, start from initial guesses
   if (any(is.null(theta), is.null(mu), is.null(zeta_hat))) {
 
+    if (init == "kmeans") {
     # run k-means on binarized data
     init_binary <- matrix(recode(data$y, `2` = 1, `1` = 0,`0` = 0),
                           nrow = data$N,
@@ -153,6 +155,33 @@ cat_mixture <- function(data, user_K = 3, n_iter = 100, fast = TRUE, IIA = FALSE
     # initialize
     theta = init_theta
     mu    = init_mu
+    }
+
+    if (init == "equal") {
+      # initialize theta {K x 1}
+      init_theta = rep(1/user_K, user_K)
+
+      # initialize mu {K x D x L}x
+      init_Z_table = rmultinom(data$N, size = 1, prob = init_theta)
+      init_Z = map_dbl(1:data$N, ~which(init_Z_table[, .x] == 1))
+
+      # data$L
+      mu <- init_mu <- array(NA, dim = c(user_K, data$D, data$L + 1))
+      for (l in 0:data$L) {
+        mu_vector <- flatten_dbl(map(1:user_K, ~colMeans(data$y[init_Z == .x, ] == l)))
+        init_mu[, , l + 1] = matrix(mu_vector, nrow = user_K, byrow = TRUE)
+      }
+
+      # container for theta
+      theta = rep(NA, user_K)
+
+      # container for zeta {N x K}
+      zeta_hat = matrix(NA, nrow = data$U, ncol = user_K)
+
+      # initialize
+      theta = init_theta
+      mu    = init_mu
+    }
   }
 
   # iterations ------
@@ -261,6 +290,7 @@ cat_mixture <- function(data, user_K = 3, n_iter = 100, fast = TRUE, IIA = FALSE
                  IIA = IIA,
                  N = data$N,
                  D = data$D,
+                 init = init,
                  time_e = difftime(t_e_end, t_e_start),
                  time_m = difftime(t_m_end, t_m_start))
     store_iter[[iter]] = list(mu = mu, theta = theta, zeta = zeta_hat, opts = opts)
