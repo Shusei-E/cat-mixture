@@ -6,8 +6,12 @@ sim-params.Rds
 sim-iterations.Rds
 cluster_votes.pdf
 cluster_votes.tex
-data/mcmc
-data/EM
+10_fit-EM_real-data.Rmd
+10_fit-EM_real-data.pdf
+10_fit-EM_real-data.tex
+data
+figures
+sk_rmarkdown.sty
 *.html
 
 # R
