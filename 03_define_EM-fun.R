@@ -104,15 +104,31 @@ cat_mixture <- function(data, user_K = 3, n_iter = 100, fast = TRUE, IIA = FALSE
     data$uy <- data$y
   }
 
-  # Setup -------
+  # Setup and initialize -------
   # unless all values are given, start from initial guesses
   if (any(is.null(theta), is.null(mu), is.null(zeta_hat))) {
+
+    # run k-means on binarized data
+    init_binary <- matrix(recode(data$y, `2` = 1, `1` = 0,`0` = 0),
+                          nrow = data$N,
+                          ncol = data$D,
+                          byrow = FALSE)
+
+    k_init <- kmeans(init_binary, centers = user_K)
+    # pre-sort so largest cluster tends to be at front
+    c_order <- order(table(k_init$cluster), decreasing = TRUE)
+
+    switcher <- 1:user_K
+    names(switcher) <- c_order
+
+    k_mu <- k_init$centers[c_order, ]
+    k_cl <- dplyr::recode(k_init$cluster, !!!switcher)
+
     # initialize theta {K x 1}
-    init_theta = rep(1/user_K, user_K)
+    init_theta = prop.table(table(k_init$cluster))[c_order]
 
     # initialize mu {K x D x L}x
-    init_Z_table = rmultinom(data$N, size = 1, prob = init_theta)
-    init_Z = map_dbl(1:data$N, ~which(init_Z_table[, .x] == 1))
+    init_Z = k_cl
 
     # data$L
     mu <- init_mu <- array(NA, dim = c(user_K, data$D, data$L + 1))
