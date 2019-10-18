@@ -238,8 +238,8 @@ cat_mixture <- function(data, user_K = 3, n_iter = 100, fast = TRUE, IIA = FALSE
                  IIA = IIA,
                  N = data$N,
                  D = data$D,
-                 time_e = difftime(t_e_end - t_e_start),
-                 time_m = difftime(t_m_end - t_m_start))
+                 time_e = difftime(t_e_end, t_e_start),
+                 time_m = difftime(t_m_end, t_m_start))
     store_iter[[iter]] = list(mu = mu, theta = theta, zeta = zeta_hat, opts = opts)
     cat(glue("iter: {iter}"), "\n")
 
@@ -254,13 +254,53 @@ cat_mixture <- function(data, user_K = 3, n_iter = 100, fast = TRUE, IIA = FALSE
 # stack all pre-post comparisons
 summ_params <- function(store_iter, data, calc_loglik = TRUE, IIA = FALSE) {
   foreach(t = 2:length(store_iter), .combine = "bind_rows") %do% {
+    t_loglik_start <- Sys.time()
     params_t       <- vector_params(t, loglik = calc_loglik, store_iter, data, IIA = IIA)
+    t_loglik_end <- Sys.time()
     params_tminus1 <- vector_params(t - 1, loglik = FALSE, store_iter, data, IIA = IIA)
 
     left_join(params_tminus1, params_t,
               by = c("param_id"),
               suffix = c("_pre", "_now")) %>%
-      mutate(iter = t) %>%
-      mutate(diff = abs(values_now - values_pre))
+      mutate(iter = t,
+             diff = abs(values_now - values_pre),
+             time_l = difftime(t_loglik_end, t_loglik_start))
   }
 }
+
+
+#' graph parameter fit
+trend_stacked <- function(params_stacked, dat = data) {
+
+  if (!"loglik_obs" %in% colnames(params_stacked)) {
+    summ_df <-  group_by(params_stacked, iter) %>%
+      summarize(`Maximum Change in Parameter (probability scale)` = max(diff))
+  }
+
+  if ("loglik_obs" %in% colnames(params_stacked)) {
+    summ_df <- params_stacked %>%
+      mutate(llobs_scale = loglik_obs / (dat$N*dat$D)) %>%
+      group_by(iter) %>%
+      summarize(`Maximum Change in Parameter (probability scale)` = max(diff),
+                `Observed Log Likelihood (per data point)` = unique(llobs_scale))
+  }
+
+  summ_df %>%
+    pivot_longer(cols = -c(iter), names_to = "metric", values_to = "value") %>%
+    ggplot(aes(iter, value)) +
+    facet_rep_wrap(~metric, scales = "free_y", ncol = 1) +
+    coord_capped_cart(bottom='both', left = 'both') +
+    geom_point(size = 0.5) +
+    geom_line() +
+    theme_clean() +
+    theme(plot.background = element_rect(color = NA),
+          axis.line = element_line(color = "black"),
+          plot.title = element_text(hjust = 0.5, face = "bold"),
+          plot.caption = element_text(size = 6),
+          strip.background = element_rect(fill = "lightgray")) +
+    labs(x = "EM Iteration",
+         y = "Metric",
+         caption = glue("Note: The parmater vector is the estimated theta's and mu's combined.
+                      Higher observed log likelihood and lower sup-norms both indicate better fit."))
+}
+

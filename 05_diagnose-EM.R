@@ -16,51 +16,15 @@ store_iter_2 <- read_rds("data/EM/sim-iterations_IIA-full.Rds")
 store_iter_3 <- read_rds("data/EM/sim-iterations_IIA-miss.Rds")
 
 
-#' graph parameter fit
-trend_stacked <- function(params_stacked, dat = data) {
-
-  if (!"loglik_obs" %in% colnames(params_stacked)) {
-    summ_df <-  group_by(params_stacked, iter) %>%
-      summarize(`Maximum Change in Parameter (probability scale)` = max(diff))
-  }
-
-  if ("loglik_obs" %in% colnames(params_stacked)) {
-    summ_df <- params_stacked %>%
-      mutate(llobs_scale = loglik_obs / (dat$N*dat$D)) %>%
-      group_by(iter) %>%
-      summarize(`Maximum Change in Parameter (probability scale)` = max(diff),
-                `Observed Log Likelihood (per data point)` = unique(llobs_scale))
-  }
-
-  summ_df %>%
-    pivot_longer(cols = -c(iter), names_to = "metric", values_to = "value") %>%
-    ggplot(aes(iter, value)) +
-    facet_rep_wrap(~metric, scales = "free_y", ncol = 1) +
-    coord_capped_cart(bottom='both', left = 'both') +
-    geom_point(size = 0.5) +
-    geom_line() +
-    theme_clean() +
-    theme(plot.background = element_rect(color = NA),
-          axis.line = element_line(color = "black"),
-          plot.title = element_text(hjust = 0.5, face = "bold"),
-          plot.caption = element_text(size = 6),
-          strip.background = element_rect(fill = "lightgray")) +
-    labs(x = "EM Iteration",
-         y = "Metric",
-         caption = glue("Note: The parmater vector is the estimated theta's and mu's combined.
-                      Higher observed log likelihood and lower sup-norms both indicate better fit."))
-}
-
-
 # Calculate metrics  ---------
-pst_3_new <- summ_params(store_iter_3, data = data_miss, IIA = TRUE, calc_loglik = TRUE)
-pst_2_new <- summ_params(store_iter_2, data = data, IIA = TRUE, calc_loglik = TRUE)
 pst_1_new <- summ_params(store_iter_1, data = data, calc_loglik = TRUE)
-
-write_rds(pst_3_new, "data/EM/sim-stats_IIA-miss.Rds")
-write_rds(pst_2_new, "data/EM/sim-stats_IIA-full.Rds")
 write_rds(pst_1_new, "data/EM/sim-stats.Rds")
+pst_3_new <- summ_params(store_iter_3, data = data_miss, IIA = TRUE, calc_loglik = TRUE)
+write_rds(pst_3_new, "data/EM/sim-stats_IIA-miss.Rds")
+pst_2_new <- summ_params(store_iter_2, data = data, IIA = TRUE, calc_loglik = TRUE)
+write_rds(pst_2_new, "data/EM/sim-stats_IIA-full.Rds")
 
+if (FALSE) {
 
 # View ----
 pst_3 <- read_rds("data/EM/sim-stats_IIA-miss.Rds")
@@ -86,6 +50,7 @@ bind_rows(mutate(pst_1, method = 1),
   geom_point() +
   labs(y = "Observed Log Likelihood per observation") +
   theme_clean()
+
 
 
 
@@ -127,3 +92,4 @@ bind_rows(mutate(pst_1, method = 1),
 # round(store_iia[[40]]$zeta[1:5, ], 2)
 #
 #
+}
