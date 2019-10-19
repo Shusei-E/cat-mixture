@@ -22,8 +22,4 @@ ch_split <- ch_votes %>%
   mutate(GOV_party = recode(GOV_party, `1` = "R", `-1` = "D", `0` = "A"))
 
 
-ch_split %>% sample_n(10) %>%
-  select(5:10)
-
-
 write_rds(ch_split, "data/split_ch-2018.Rds")
