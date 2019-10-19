@@ -3,7 +3,7 @@ using namespace Rcpp;
 
 // (mu^{y = l})
 // [[Rcpp::export]]
-double mu_ind(double mu, int y, int l) {
+double mu_ind(const double &mu, const int &y, const int &l) {
   bool ind = (y == l);
   return pow(mu, ind);
 }
