@@ -1,10 +1,5 @@
-library(tidyverse)
-library(foreach)
-library(glue)
-library(mlogit)
-
-expit <- function(x) 1/(1 + exp(-x))
-
+# Cpp
+Rcpp::sourceCpp("02_cpp-functions.cpp")
 
 # Diagnosis ----
 
@@ -42,10 +37,7 @@ loglik_obs <- function(t, obj, data, fast = TRUE, IIA = FALSE) {
     for (k in 1:user_K) {
       # if not IIA, then follow original
       if (!IIA) {
-        resp_i[k] = foreach(j = 1:data$D, .combine = "*") %:%
-          foreach(l = 0:(data$L), .combine = "*") %do% {
-            (mu_t[k, j, (l + 1)])^(data$uy[u, j] == l)
-          }
+        resp_i[k] = mu_yvec(mu_k = mu_t[k, , ], y = data$uy[u, ], L = data$L)
       }
       # recale if IIA
       if (IIA) {
@@ -93,7 +85,12 @@ vector_params <- function(t, loglik = FALSE, obj, data, IIA = FALSE) {
 #' Compute EM
 cat_mixture <- function(data, user_K = 3, n_iter = 100, fast = TRUE, IIA = FALSE,
                         init = c("kmeans", "equal"),
+                        seed = 02138,
                         theta = NULL, mu = NULL, zeta_hat  = NULL) {
+
+  # checkpackages
+  stopifnot(all(require(purrr), require(foreach), require(glue)))
+  if (IIA) stopifnot(require(mlogit))
 
   # cannot handle groupings in IIA case
   if (IIA) fast <- FALSE
@@ -116,6 +113,7 @@ cat_mixture <- function(data, user_K = 3, n_iter = 100, fast = TRUE, IIA = FALSE
                           ncol = data$D,
                           byrow = FALSE)
 
+    set.seed(seed)
     k_init <- kmeans(init_binary, centers = user_K)
     # pre-sort so largest cluster tends to be at front
     c_order <- order(table(k_init$cluster), decreasing = TRUE)
@@ -161,7 +159,8 @@ cat_mixture <- function(data, user_K = 3, n_iter = 100, fast = TRUE, IIA = FALSE
       # initialize theta {K x 1}
       init_theta = rep(1/user_K, user_K)
 
-      # initialize mu {K x D x L}x
+      # initialize mu {K x D x L}
+      set.seed(seed)
       init_Z_table = rmultinom(data$N, size = 1, prob = init_theta)
       init_Z = map_dbl(1:data$N, ~which(init_Z_table[, .x] == 1))
 
@@ -198,11 +197,7 @@ cat_mixture <- function(data, user_K = 3, n_iter = 100, fast = TRUE, IIA = FALSE
 
       for (k in 1:user_K) {
         if (!IIA) {
-          # zeta_{ik} = theta_{k}prod^{D}_{j=1}prod^{L}_{l=0})(mu[k, j, (l + 1)]^(y[i, j] == l))
-          resp_u[k] = foreach(j = 1:data$D, .combine = "*") %:%
-            foreach(l = 0:(data$L), .combine = "*") %do% {
-              (mu[k, j, (l + 1)])^(data$uy[u, j] == l)
-            }
+          resp_u[k] = mu_yvec(mu_k = mu[k, , ], y = data$uy[u, ], L = data$L)
         }
 
         if (IIA) {

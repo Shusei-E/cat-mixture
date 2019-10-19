@@ -72,10 +72,11 @@ unique_y <- as_tibble(data$y) %>%
   summarize(profile = str_c(y, collapse = "")) %>%
   count(profile, name = "n_u") %>%
   separate(profile, into = str_c("v", 1:D), sep = 1:D) %>%
-  mutate_all(as.integer)
+  mutate_all(as.integer) %>%
+  as.matrix()
 
 unique_y_mat <- unique_y[, 1:D]
-n_u <- unique_y$n_u
+n_u <- unique_y[, "n_u"]
 U <- length(n_u)
 
 
